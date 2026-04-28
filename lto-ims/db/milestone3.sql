@@ -168,4 +168,3 @@ SELECT v.name AS violation_type, COUNT(*) AS total_count FROM violation_ticket v
 SELECT DISTINCT veh.plate_number, veh.engine_number, veh.chassis_number, veh.make, veh.model, veh.`year`, veh.color, veh.vehicle_type FROM violation_ticket vt
 JOIN vehicle veh ON veh.plate_number = vt.plate_number AND veh.engine_number = vt.engine_number
 AND veh.chassis_number = vt.chassis_number WHERE vt.issued_at LIKE "%Quezon City%";
-
