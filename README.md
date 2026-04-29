@@ -1,72 +1,117 @@
-🚀 Daily Git Workflow (Team Guide)
+# 🔀 Daily Git Workflow (Team)
 
-This guide ensures a consistent and conflict-free workflow for all team members.
+A step-by-step guide for consistent, conflict-free collaboration using Git and GitHub.
 
-🧼 Step 0 — Start the Day Clean
+---
 
-Always sync your local main branch before starting any work:
+## Step 0 — Start the Day Clean
 
+Always pull the latest `main` before starting any work:
+
+```bash
 git checkout main
 git pull origin main
-🌿 Step 1 — Create a Feature Branch
+```
 
-Create a new branch for each task using the naming convention:
+---
 
-feature/<task>
-fix/<task>
+## Step 1 — Create a Feature Branch for Your Task
 
-Example:
+Use a consistent branch naming format:
 
+| Type | Format |
+|------|--------|
+| New feature | `feature/<task>` |
+| Bug fix | `fix/<task>` |
+
+**Example:**
+
+```bash
 git checkout -b feature/drivers-api
-💡 Step 2 — Work & Commit in Small Chunks
+```
 
-Commit frequently with clear, descriptive messages. Avoid batching large changes at the end of the day.
+---
 
+## Step 2 — Work and Commit in Small Chunks
+
+Commit often — don't wait until the end of the day:
+
+```bash
 git add backend/src/routes/drivers.js
 git commit -m "Add drivers GET and POST endpoints"
-☁️ Step 3 — Push Your Branch
+```
 
-Push your branch to GitHub:
+> 💡 Small, frequent commits make code reviews easier and conflicts less painful.
 
+---
+
+## Step 3 — Push Your Branch to GitHub
+
+```bash
 git push -u origin feature/drivers-api
-🔀 Step 4 — Open a Pull Request (PR)
+```
+
+---
+
+## Step 4 — Open a Pull Request (PR)
 
 On GitHub:
 
-Create a PR from feature/drivers-api → main
-Add a short description:
-What changed
-How to test it
-🔄 Step 5 — Sync with main Before Merging
+1. Create a PR from `feature/drivers-api` → `main`
+2. Add a short description covering:
+   - **What changed**
+   - **How to test it**
 
-Avoid merge conflicts by updating your branch before merging:
+---
 
+## Step 5 — Sync with `main` Before Merging
+
+If your branch is behind `main`, sync it first to avoid conflicts:
+
+```bash
 git checkout feature/drivers-api
 git pull origin main
-# Resolve conflicts if any
+# resolve any conflicts if they appear
 git push
+```
 
-Then proceed to merge your PR.
+Then merge the PR on GitHub. ✅
 
-🧹 Step 6 — Clean Up After Merge
+---
 
-After your PR is merged:
+## Step 6 — After Merge, Delete the Branch
 
-Delete the branch on GitHub
-Delete it locally:
+Clean up to keep the repo tidy:
+
+```bash
 git checkout main
 git pull origin main
 git branch -d feature/drivers-api
-🚫 Ignore Unnecessary Files
+```
 
-Make sure to ignore node_modules in the frontend:
+> Also delete the branch on GitHub via the PR page or the **Branches** tab.
 
-Add this to your .gitignore:
+---
 
+## .gitignore — Frontend `node_modules`
+
+Make sure your `.gitignore` includes:
+
+```
 frontend/node_modules/
-✅ Best Practices
-Pull main daily before starting work
-Use meaningful branch names
-Commit often with clear messages
-Keep PRs small and focused
-Always sync before merging
+```
+
+> Never commit `node_modules` — it's large, machine-specific, and fully reproducible via `npm install`.
+
+---
+
+## Quick Reference
+
+```
+morning          → git pull origin main
+new task         → git checkout -b feature/<task>
+save progress    → git add . && git commit -m "..."
+share work       → git push -u origin feature/<task>
+before merging   → git pull origin main (on your branch)
+after merging    → git checkout main && git pull && git branch -d feature/<task>
+```
