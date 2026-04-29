@@ -24,8 +24,13 @@ app.get("/", (req, res) => {
   res.send("Backend is running. Try /api/health");
 });
 
-// Start server here
+// Start server
 const PORT = process.env.PORT || 3001;
+
+// Mount routes to server
+const driversRouter = require("./routes/drivers");
+app.use("/api/drivers", driversRouter);
+
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
 });
@@ -41,3 +46,4 @@ app.get("/api/db-test", async (req, res) => {
     res.status(500).json({ error: "DB test failed", details: err.message });
   }
 });
+
