@@ -29,7 +29,12 @@ const PORT = process.env.PORT || 3001;
 
 // Mount routes to server
 const driversRouter = require("./routes/drivers");
+const ticketsRouter = require("./routes/tickets");
+const violationsRouter = require("./routes/violations");
+
 app.use("/api/drivers", driversRouter);
+app.use("/api/tickets", ticketsRouter);
+app.use("/api/violations", violationsRouter);
 
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
