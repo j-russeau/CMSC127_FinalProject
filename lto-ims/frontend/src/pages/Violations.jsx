@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
+import { listTickets, createTicket } from "../api/tickets";
+import { listViolations, createViolation } from "../api/violations";
+import "./Violations.css";
 
 const demoTickets = [
   {
@@ -46,7 +47,6 @@ function formatMoney(n) {
 }
 
 function formatDateTime(dtString) {
-  // Accepts "YYYY-MM-DD HH:mm:ss" or ISO strings
   if (!dtString) return { date: "—", time: "" };
   const iso = dtString.includes("T") ? dtString : dtString.replace(" ", "T");
   const d = new Date(iso);
@@ -57,62 +57,41 @@ function formatDateTime(dtString) {
   return { date, time };
 }
 
+function toMysqlDateTime(datetimeLocalValue) {
+  // input type="datetime-local" gives "YYYY-MM-DDTHH:MM"
+  // backend expects "YYYY-MM-DD HH:MM:SS"
+  if (!datetimeLocalValue) return "";
+  const s = datetimeLocalValue.replace("T", " ");
+  return s.length === 16 ? `${s}:00` : s; // add seconds if missing
+}
+
+function safeIdPart(s) {
+  return String(s || "")
+    .trim()
+    .replace(/[^A-Za-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
+function genViolationId(ticketId, idx) {
+  // predictable, unique enough for demo; change later if you want UUIDs
+  const t = safeIdPart(ticketId);
+  return `V-${t}-${idx + 1}`;
+}
+
 function StatusPill({ status }) {
   const s = (status || "").toLowerCase();
-
-  // Colors from palette:
-  // red: #FF3B30, green: #34C759, orange: #FF9500
-  let bg = "rgba(134, 134, 139, 0.12)";
-  let fg = "#1D1D1F";
-
-  if (s === "unpaid") {
-    bg = "rgba(255, 59, 48, 0.12)";
-    fg = "#FF3B30";
-  } else if (s === "paid") {
-    bg = "rgba(52, 199, 89, 0.12)";
-    fg = "#34C759";
-  } else if (s === "contested") {
-    bg = "rgba(255, 149, 0, 0.12)";
-    fg = "#FF9500";
-  }
-
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "6px 10px",
-        borderRadius: 999,
-        background: bg,
-        color: fg,
-        fontSize: 12,
-        fontWeight: 600,
-        textTransform: "lowercase",
-        lineHeight: "12px",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {s || "—"}
-    </span>
-  );
+  let cls = "statusPill";
+  if (s === "unpaid") cls += " statusUnpaid";
+  else if (s === "paid") cls += " statusPaid";
+  else if (s === "contested") cls += " statusContested";
+  return <span className={cls}>{s || "—"}</span>;
 }
 
 function SearchInput({ value, onChange, placeholder }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        background: "rgba(255,255,255,0.9)",
-        border: "1px solid rgba(255,255,255,0.4)",
-        borderRadius: 14,
-        padding: "10px 12px",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.04)",
-      }}
-    >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <div className="searchWrap">
+      <svg className="searchIcon" width="18" height="18" viewBox="0 0 24 24" fill="none">
         <path
           d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
           stroke="#86868B"
@@ -120,19 +99,7 @@ function SearchInput({ value, onChange, placeholder }) {
         />
         <path d="M16.5 16.5 21 21" stroke="#86868B" strokeWidth="2" strokeLinecap="round" />
       </svg>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{
-          border: "none",
-          outline: "none",
-          background: "transparent",
-          width: "100%",
-          fontSize: 14,
-          color: "#1D1D1F",
-        }}
-      />
+      <input className="searchInput" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
     </div>
   );
 }
@@ -140,59 +107,90 @@ function SearchInput({ value, onChange, placeholder }) {
 export default function Violations() {
   const [query, setQuery] = useState("");
   const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingTickets, setLoadingTickets] = useState(true);
   const [err, setErr] = useState("");
   const [showSql, setShowSql] = useState(false);
 
-  // TODO: hook this to a modal later
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [violations, setViolations] = useState([]);
+  const [loadingViolations, setLoadingViolations] = useState(false);
+
+  const [msg, setMsg] = useState("");
+  const [msgErr, setMsgErr] = useState("");
+
+  // Modal state
   const [createOpen, setCreateOpen] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  // Step 1: Ticket form (Figma)
+  const [ticketForm, setTicketForm] = useState({
+    ticket_id: "",
+    datetime_local: "", // for input type datetime-local
+    issued_at: "",
+    apprehending_officer: "",
+    license_number: "",
+    plate_number: "",
+    engine_number: "",
+    chassis_number: "",
+    violation_status: "unpaid", // required by backend
+  });
 
-    async function load() {
-      setLoading(true);
-      setErr("");
+  // Step 2: Violations list in modal (Figma)
+  const [modalViolations, setModalViolations] = useState([
+    { name: "", fine: "" }, // start with 1 row
+  ]);
 
-      try {
-        const res = await fetch(`${API_BASE}/api/tickets`);
-        const json = await res.json();
+  const modalTotalFine = useMemo(() => {
+    return modalViolations.reduce((sum, v) => {
+      const n = Number(v.fine);
+      return sum + (Number.isFinite(n) ? n : 0);
+    }, 0);
+  }, [modalViolations]);
 
-        if (!res.ok || !json.ok) {
-          throw new Error(json.error || "Failed to load tickets");
-        }
-
-        if (!cancelled) {
-          // Map DB fields into UI-friendly fields
-          // If backend doesn't provide driver_name/vehicle_label/total_fine,  show fallbacks
-          const mapped = (json.data || []).map((t) => ({
-            ticket_id: t.ticket_id,
-            driver_name: t.driver_name || t.license_number || "—",
-            driver_license: t.license_number || "—",
-            plate_number: t.plate_number || "—",
-            vehicle_label: t.vehicle_label || "—",
-            datetime: t.datetime,
-            issued_at: t.issued_at,
-            total_fine: t.total_fine ?? null,
-            violation_status: t.violation_status,
-          }));
-          setTickets(mapped);
-        }
-      } catch (e) {
-        // If backend isn't ready, fall back to demo data
-        if (!cancelled) {
-          setTickets(demoTickets);
-          setErr(e.message);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  async function refreshTickets() {
+    setLoadingTickets(true);
+    setErr("");
+    try {
+      const rows = await listTickets();
+      const mapped = (rows || []).map((t) => ({
+        ticket_id: t.ticket_id,
+        driver_name: t.driver_name || t.license_number || "—",
+        driver_license: t.license_number || "—",
+        plate_number: t.plate_number || "—",
+        vehicle_label: t.vehicle_label || "—",
+        datetime: t.datetime,
+        issued_at: t.issued_at,
+        total_fine: t.total_fine ?? null,
+        violation_status: t.violation_status,
+        engine_number: t.engine_number,
+        chassis_number: t.chassis_number,
+      }));
+      setTickets(mapped);
+    } catch (e) {
+      setTickets(demoTickets);
+      setErr(e.message);
+    } finally {
+      setLoadingTickets(false);
     }
+  }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
+  async function loadViolations(ticketId) {
+    if (!ticketId) return;
+    setLoadingViolations(true);
+    setMsg("");
+    setMsgErr("");
+    try {
+      const rows = await listViolations(ticketId);
+      setViolations(rows || []);
+    } catch (e) {
+      setViolations([]);
+      setMsgErr(e.message);
+    } finally {
+      setLoadingViolations(false);
+    }
+  }
+
+  useEffect(() => {
+    refreshTickets();
   }, []);
 
   const filtered = useMemo(() => {
@@ -212,247 +210,223 @@ export default function Violations() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-
       return hay.includes(q);
     });
   }, [tickets, query]);
 
-  const containerStyle = {
-    display: "inline-flex",
-    height: "899px",
-    paddingLeft: "16px",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    gap: "16px",
-    width: "100%",
-    background: "linear-gradient(135deg, #F5F7FA 0%, #E4E9F2 100%)",
-    boxSizing: "border-box",
-  };
+  const selectedTicket = useMemo(() => {
+    if (!selectedTicketId) return null;
+    return tickets.find((t) => t.ticket_id === selectedTicketId) || null;
+  }, [tickets, selectedTicketId]);
 
-  const sidebarStyle = {
-    width: 240,
-    height: "calc(899px - 32px)",
-    borderRadius: 18,
-    background: "#FFFFFF",
-    boxShadow: "0 12px 28px rgba(0,0,0,0.06)",
-    padding: 16,
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  };
+  function resetCreateModal() {
+    setTicketForm({
+      ticket_id: "",
+      datetime_local: "",
+      issued_at: "",
+      apprehending_officer: "",
+      license_number: "",
+      plate_number: "",
+      engine_number: "",
+      chassis_number: "",
+      violation_status: "unpaid",
+    });
+    setModalViolations([{ name: "", fine: "" }]);
+  }
 
-  const mainStyle = {
-    flex: 1,
-    height: "calc(899px - 32px)",
-    borderRadius: 18,
-    padding: 18,
-    display: "flex",
-    flexDirection: "column",
-    gap: 14,
-  };
+  function openCreateModal() {
+    setMsg("");
+    setMsgErr("");
+    resetCreateModal();
+    setCreateOpen(true);
+  }
 
-  const topBarStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  };
+  function addViolationRow() {
+    setModalViolations((prev) => [...prev, { name: "", fine: "" }]);
+  }
 
-  const cardStyle = {
-    background: "rgba(255,255,255,0.9)",
-    border: "1px solid rgba(255,255,255,0.4)",
-    borderRadius: 18,
-    boxShadow: "0 14px 35px rgba(0,0,0,0.06)",
-    padding: 16,
-  };
+  function updateViolationRow(idx, patch) {
+    setModalViolations((prev) => prev.map((v, i) => (i === idx ? { ...v, ...patch } : v)));
+  }
 
-  const tableHeaderStyle = {
-    display: "grid",
-    gridTemplateColumns: "140px 220px 180px 160px 180px 120px 120px 90px",
-    gap: 10,
-    fontSize: 12,
-    color: "#86868B",
-    padding: "10px 8px",
-  };
+  function removeViolationRow(idx) {
+    setModalViolations((prev) => prev.filter((_, i) => i !== idx));
+  }
 
-  const rowStyle = {
-    display: "grid",
-    gridTemplateColumns: "140px 220px 180px 160px 180px 120px 120px 90px",
-    gap: 10,
-    alignItems: "center",
-    padding: "12px 8px",
-    borderTop: "1px solid rgba(0,0,0,0.05)",
-  };
+  async function submitCreateTicketWithViolations() {
+    setMsg("");
+    setMsgErr("");
+
+    // Validate Step 1 required fields
+    const required = [
+      ["ticket_id", ticketForm.ticket_id],
+      ["datetime", ticketForm.datetime_local],
+      ["issued_at", ticketForm.issued_at],
+      ["license_number", ticketForm.license_number],
+      ["plate_number", ticketForm.plate_number],
+      ["engine_number", ticketForm.engine_number],
+      ["chassis_number", ticketForm.chassis_number],
+    ];
+    for (const [label, value] of required) {
+      if (!value || String(value).trim() === "") {
+        setMsgErr(`Missing required field: ${label}`);
+        return;
+      }
+    }
+
+    // Validate Step 2: at least one valid violation
+    const cleaned = modalViolations
+      .map((v) => ({ name: (v.name || "").trim(), fine: (v.fine || "").trim() }))
+      .filter((v) => v.name.length > 0 || v.fine.length > 0);
+
+    if (cleaned.length === 0) {
+      setMsgErr("Please add at least one violation (name + fine).");
+      return;
+    }
+
+    for (let i = 0; i < cleaned.length; i++) {
+      const v = cleaned[i];
+      if (!v.name) {
+        setMsgErr(`Violation ${i + 1}: name is required.`);
+        return;
+      }
+      const fine = Number(v.fine);
+      if (!Number.isFinite(fine) || fine < 0) {
+        setMsgErr(`Violation ${i + 1}: fine must be a valid number (>= 0).`);
+        return;
+      }
+    }
+
+    const ticketPayload = {
+      ticket_id: ticketForm.ticket_id.trim(),
+      datetime: toMysqlDateTime(ticketForm.datetime_local),
+      violation_status: ticketForm.violation_status,
+      issued_at: ticketForm.issued_at.trim(),
+      apprehending_officer: ticketForm.apprehending_officer.trim() || null,
+      license_number: ticketForm.license_number.trim(),
+      plate_number: ticketForm.plate_number.trim(),
+      engine_number: ticketForm.engine_number.trim(),
+      chassis_number: ticketForm.chassis_number.trim(),
+    };
+
+    try {
+      // 1) Create ticket
+      await createTicket(ticketPayload);
+
+      // 2) Create violations under ticket (sequential for simplicity)
+      for (let i = 0; i < cleaned.length; i++) {
+        const v = cleaned[i];
+        await createViolation({
+          violation_id: genViolationId(ticketPayload.ticket_id, i),
+          name: v.name,
+          corresponding_fine_amount: Number(v.fine),
+          ticket_id: ticketPayload.ticket_id,
+        });
+      }
+
+      setMsg("Ticket created with violations.");
+      setCreateOpen(false);
+
+      // Refresh UI
+      await refreshTickets();
+      setSelectedTicketId(ticketPayload.ticket_id);
+      await loadViolations(ticketPayload.ticket_id);
+    } catch (e) {
+      setMsgErr(e.message);
+    }
+  }
 
   return (
-    <div style={containerStyle}>
+    <div className="violationsContainer">
       {/* Sidebar */}
-      <aside style={sidebarStyle}>
-        <div>
-          <div style={{ fontWeight: 800, color: "#1D1D1F" }}>LTO IMS</div>
-          <div style={{ fontSize: 12, color: "#86868B", marginTop: 2 }}>
-            Information Management
-          </div>
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brandTitle">LTO IMS</div>
+          <div className="brandSub">Information Management</div>
         </div>
 
-        <div style={{ height: 8 }} />
+        <div className="nav">
+          {[
+            { label: "Dashboard", active: false },
+            { label: "Drivers", active: false },
+            { label: "Vehicles", active: false },
+            { label: "Registrations", active: false },
+            { label: "Violations", active: true },
+            { label: "Reports", active: false },
+          ].map((item) => (
+            <div key={item.label} className={`navItem ${item.active ? "navItemActive" : ""}`}>
+              <span>{item.label}</span>
+              {item.active ? <span className="navChevron">›</span> : null}
+            </div>
+          ))}
+        </div>
 
-        {/* Nav (static for now) */}
-        {[
-          { label: "Dashboard", active: false },
-          { label: "Drivers", active: false },
-          { label: "Vehicles", active: false },
-          { label: "Registrations", active: false },
-          { label: "Violations", active: true },
-          { label: "Reports", active: false },
-        ].map((item) => (
-          <div
-            key={item.label}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "10px 12px",
-              borderRadius: 12,
-              background: item.active ? "rgba(74, 143, 249, 0.12)" : "transparent",
-              color: item.active ? "#4A8FF9" : "#1D1D1F",
-              fontWeight: item.active ? 700 : 600,
-              cursor: "default",
-            }}
-          >
-            <span>{item.label}</span>
-            {item.active ? <span style={{ fontSize: 16 }}>›</span> : null}
-          </div>
-        ))}
-
-        <div style={{ flex: 1 }} />
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 8 }}>
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 999,
-              background: "rgba(74, 143, 249, 0.12)",
-              display: "grid",
-              placeItems: "center",
-              color: "#4A8FF9",
-              fontWeight: 800,
-            }}
-          >
-            A
-          </div>
+        <div className="sidebarFooter">
+          <div className="avatarCircle">A</div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1D1D1F" }}>Admin User</div>
-            <div style={{ fontSize: 12, color: "#86868B" }}>Administrator</div>
+            <div className="userName">Admin User</div>
+            <div className="userRole">Administrator</div>
           </div>
         </div>
       </aside>
 
       {/* Main */}
-      <main style={mainStyle}>
+      <main className="main">
         {/* Top bar */}
-        <div style={topBarStyle}>
-          <div style={{ flex: 1, maxWidth: 520 }}>
+        <div className="topBar">
+          <div className="topSearch">
             <SearchInput value={query} onChange={setQuery} placeholder="Search..." />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button
-              onClick={() => setShowSql((v) => !v)}
-              title="Show SQL"
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                border: "1px solid rgba(255,255,255,0.4)",
-                background: "rgba(255,255,255,0.9)",
-                boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-                cursor: "pointer",
-                fontWeight: 800,
-                color: "#4A8FF9",
-              }}
-            >
+          <div className="topRight">
+            <button className="codeBtn" onClick={() => setShowSql((v) => !v)} title="Show SQL">
               {"</>"}
             </button>
 
-            <div style={{ fontSize: 12, color: "#86868B", textAlign: "right", lineHeight: 1.2 }}>
-              <div style={{ fontWeight: 700, color: "#1D1D1F" }}>
+            <div className="dateTime">
+              <div className="dateText">
                 {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "2-digit" })}
               </div>
-              <div>{new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</div>
+              <div className="timeText">
+                {new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+              </div>
             </div>
 
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 999,
-                background: "rgba(74, 143, 249, 0.12)",
-                display: "grid",
-                placeItems: "center",
-                color: "#4A8FF9",
-                fontWeight: 800,
-              }}
-            >
-              A
-            </div>
+            <div className="avatarCircle small">A</div>
           </div>
         </div>
 
-        {/* Header + Create Ticket */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+        {/* Header */}
+        <div className="headerRow">
           <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#1D1D1F" }}>Violation Management</div>
-            <div style={{ fontSize: 13, color: "#86868B", marginTop: 4 }}>
-              Track and manage traffic violation tickets
-            </div>
+            <div className="pageTitle">Violation Management</div>
+            <div className="pageSub">Track and manage traffic violation tickets</div>
           </div>
 
-          <button
-            onClick={() => setCreateOpen(true)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              border: "none",
-              padding: "10px 14px",
-              borderRadius: 12,
-              cursor: "pointer",
-              fontWeight: 700,
-              color: "#FFFFFF",
-              background: "linear-gradient(135deg, #4F8CFF 0%, #4A87F9 60%, #4785F6 100%)",
-              boxShadow: "0 14px 30px rgba(74,143,249,0.25)",
-            }}
-          >
-            <span style={{ fontSize: 18, lineHeight: 0 }}>+</span>
-            Create Ticket
+          <button className="primaryBtn" onClick={openCreateModal}>
+            <span className="plus">+</span> Create Ticket
           </button>
         </div>
 
-        {/* Secondary search bar */}
-        <div style={cardStyle}>
-          <SearchInput
-            value={query}
-            onChange={setQuery}
-            placeholder="Search by ticket ID, driver, or vehicle..."
-          />
+        {/* Secondary Search */}
+        <div className="card">
+          <SearchInput value={query} onChange={setQuery} placeholder="Search by ticket ID, driver, or vehicle..." />
           {err ? (
-            <div style={{ marginTop: 10, fontSize: 12, color: "#86868B" }}>
-              Using demo data (API not reachable): <span style={{ color: "#FF3B30" }}>{err}</span>
+            <div className="softNote">
+              Using demo data (API not reachable): <span className="softNoteErr">{err}</span>
             </div>
           ) : null}
         </div>
 
         {/* Tickets table */}
-        <div style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
-          <div style={{ padding: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1D1D1F" }}>
-              {loading ? "Loading tickets..." : `Tickets (${filtered.length})`}
-            </div>
+        <div className="card tableCard">
+          <div className="tableTitleRow">
+            <div className="tableTitle">{loadingTickets ? "Loading tickets..." : `Tickets (${filtered.length})`}</div>
+            {msg ? <div className="msgSuccess">{msg}</div> : null}
+            {msgErr ? <div className="msgError">{msgErr}</div> : null}
           </div>
 
-          <div style={tableHeaderStyle}>
+          <div className="tableHeader">
             <div>Ticket ID</div>
             <div>Driver</div>
             <div>Vehicle</div>
@@ -467,121 +441,300 @@ export default function Violations() {
             const { date, time } = formatDateTime(t.datetime);
 
             return (
-              <div key={t.ticket_id} style={rowStyle}>
-                <div style={{ fontWeight: 800, color: "#1D1D1F" }}>{t.ticket_id}</div>
+              <div className="tableRow" key={t.ticket_id}>
+                <div className="ticketId">{t.ticket_id}</div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <div style={{ fontWeight: 700, color: "#1D1D1F" }}>{t.driver_name}</div>
-                  <div style={{ fontSize: 12, color: "#86868B" }}>{t.driver_license}</div>
+                <div className="cellCol">
+                  <div className="cellStrong">{t.driver_name}</div>
+                  <div className="cellMuted">{t.driver_license}</div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <div style={{ fontWeight: 700, color: "#1D1D1F" }}>{t.plate_number}</div>
-                  <div style={{ fontSize: 12, color: "#86868B" }}>{t.vehicle_label}</div>
+                <div className="cellCol">
+                  <div className="cellStrong">{t.plate_number}</div>
+                  <div className="cellMuted">{t.vehicle_label}</div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <div style={{ fontWeight: 700, color: "#1D1D1F" }}>{date}</div>
-                  <div style={{ fontSize: 12, color: "#86868B" }}>{time}</div>
+                <div className="cellCol">
+                  <div className="cellStrong">{date}</div>
+                  <div className="cellMuted">{time}</div>
                 </div>
 
-                <div style={{ color: "#1D1D1F" }}>{t.issued_at}</div>
+                <div className="cell">{t.issued_at}</div>
 
-                <div style={{ fontWeight: 800, color: "#FF3B30" }}>{formatMoney(t.total_fine)}</div>
+                <div className="fineCell">{formatMoney(t.total_fine)}</div>
 
-                <div>
+                <div className="cell">
                   <StatusPill status={t.violation_status} />
                 </div>
 
-                <div>
-                  <a
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    style={{ color: "#4A8FF9", fontWeight: 700, textDecoration: "none" }}
+                <div className="cell">
+                  <button
+                    className="linkBtn"
+                    onClick={async () => {
+                      setSelectedTicketId(t.ticket_id);
+                      await loadViolations(t.ticket_id);
+                    }}
                   >
                     View
-                  </a>
+                  </button>
                 </div>
               </div>
             );
           })}
 
-          {!loading && filtered.length === 0 ? (
-            <div style={{ padding: 18, color: "#86868B" }}>No tickets found.</div>
-          ) : null}
+          {!loadingTickets && filtered.length === 0 ? <div className="emptyState">No tickets found.</div> : null}
         </div>
 
-        {/* SQL Preview  */}
+        {/* Details panel */}
+        {selectedTicketId ? (
+          <div className="card">
+            <div className="detailsHeader">
+              <div className="detailsTitle">
+                Ticket Details: <span className="detailsId">{selectedTicketId}</span>
+              </div>
+              <button
+                className="linkBtn muted"
+                onClick={() => {
+                  setSelectedTicketId(null);
+                  setViolations([]);
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            {selectedTicket ? (
+              <div className="detailsMeta">
+                <div>
+                  <span className="metaLabel">Driver:</span> {selectedTicket.driver_license}
+                </div>
+                <div>
+                  <span className="metaLabel">Vehicle:</span> {selectedTicket.plate_number}
+                </div>
+                <div>
+                  <span className="metaLabel">Location:</span> {selectedTicket.issued_at}
+                </div>
+                <div>
+                  <span className="metaLabel">Status:</span> {selectedTicket.violation_status}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="detailsBody">
+              <div className="detailsSectionTitle">Violations</div>
+
+              {loadingViolations ? (
+                <div className="softNote">Loading violations...</div>
+              ) : violations.length === 0 ? (
+                <div className="softNote">No violations yet.</div>
+              ) : (
+                <ul className="violationList">
+                  {violations.map((v) => (
+                    <li key={v.violation_id}>
+                      <b>{v.name}</b> — ₱{Number(v.corresponding_fine_amount).toLocaleString("en-PH")}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        {/* SQL preview */}
         {showSql ? (
-          <div style={{ ...cardStyle, fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" }}>
-            <div style={{ fontSize: 12, color: "#86868B", marginBottom: 8 }}>SQL used (example)</div>
-            <pre style={{ margin: 0, fontSize: 12, whiteSpace: "pre-wrap" }}>
-              {`-- List tickets
-              SELECT *
-              FROM violation_ticket
-              ORDER BY datetime DESC;`}
+          <div className="card codeCard">
+            <div className="codeLabel">SQL used (example)</div>
+            <pre className="codePre">
+{`-- List tickets
+SELECT *
+FROM violation_ticket
+ORDER BY datetime DESC;
+
+-- Create ticket
+INSERT INTO violation_ticket (...) VALUES (...);
+
+-- Add violation
+INSERT INTO violation (...) VALUES (...);
+
+-- List violations by ticket
+SELECT *
+FROM violation
+WHERE ticket_id = ?;`}
             </pre>
           </div>
         ) : null}
 
-        {/* Create Ticket modal stub (UI-only for now) */}
+        {/* Create Ticket Modal (Figma-style, Step 1 + Step 2) */}
         {createOpen ? (
-          <div
-            onClick={() => setCreateOpen(false)}
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.25)",
-              display: "grid",
-              placeItems: "center",
-              zIndex: 50,
-            }}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                width: 520,
-                maxWidth: "92vw",
-                background: "#fff",
-                borderRadius: 18,
-                padding: 18,
-                boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Create Ticket</div>
-                <button
-                  onClick={() => setCreateOpen(false)}
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    cursor: "pointer",
-                    fontSize: 18,
-                    color: "#86868B",
-                  }}
-                >
+          <div className="modalOverlay" onClick={() => setCreateOpen(false)}>
+            <div className="modal wide" onClick={(e) => e.stopPropagation()}>
+              <div className="modalHeader">
+                <div className="modalTitle">Create Violation Ticket</div>
+                <button className="modalClose" onClick={() => setCreateOpen(false)}>
                   ✕
                 </button>
               </div>
 
-              <div style={{ marginTop: 10, fontSize: 13, color: "#86868B" }}>
-                Modal stub only (hook this to POST /api/tickets on Day 6).
+              <div className="modalDivider" />
+
+              {/* Step 1 */}
+              <div className="stepBox stepBlue">
+                <div className="stepTitle">Step 1: Ticket Information</div>
+
+                <div className="formGrid2">
+                  <div className="field">
+                    <label>Ticket ID</label>
+                    <input
+                      className="input"
+                      placeholder="VIO-2024-001"
+                      value={ticketForm.ticket_id}
+                      onChange={(e) => setTicketForm({ ...ticketForm, ticket_id: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Date & Time</label>
+                    <input
+                      className="input"
+                      type="datetime-local"
+                      value={ticketForm.datetime_local}
+                      onChange={(e) => setTicketForm({ ...ticketForm, datetime_local: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Issued At (City/Region)</label>
+                    <input
+                      className="input"
+                      placeholder="Makati City, NCR"
+                      value={ticketForm.issued_at}
+                      onChange={(e) => setTicketForm({ ...ticketForm, issued_at: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Apprehending Officer (Optional)</label>
+                    <input
+                      className="input"
+                      placeholder="Officer Name"
+                      value={ticketForm.apprehending_officer}
+                      onChange={(e) => setTicketForm({ ...ticketForm, apprehending_officer: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Driver (License Number)</label>
+                    <input
+                      className="input"
+                      placeholder="D06-11-009385"
+                      value={ticketForm.license_number}
+                      onChange={(e) => setTicketForm({ ...ticketForm, license_number: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Vehicle (Plate / Engine / Chassis)</label>
+                    <div className="vehicleTriple">
+                      <input
+                        className="input"
+                        placeholder="Plate"
+                        value={ticketForm.plate_number}
+                        onChange={(e) => setTicketForm({ ...ticketForm, plate_number: e.target.value })}
+                      />
+                      <input
+                        className="input"
+                        placeholder="Engine"
+                        value={ticketForm.engine_number}
+                        onChange={(e) => setTicketForm({ ...ticketForm, engine_number: e.target.value })}
+                      />
+                      <input
+                        className="input"
+                        placeholder="Chassis"
+                        value={ticketForm.chassis_number}
+                        onChange={(e) => setTicketForm({ ...ticketForm, chassis_number: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* keep status hidden/simple but still controllable */}
+                <div className="hiddenRow">
+                  <label>Status</label>
+                  <select
+                    className="input"
+                    value={ticketForm.violation_status}
+                    onChange={(e) => setTicketForm({ ...ticketForm, violation_status: e.target.value })}
+                  >
+                    <option value="unpaid">unpaid</option>
+                    <option value="paid">paid</option>
+                    <option value="contested">contested</option>
+                  </select>
+                </div>
               </div>
 
-              <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
+              {/* Step 2 */}
+              <div className="stepBox stepRed">
+                <div className="stepRow">
+                  <div className="stepTitle red">Step 2: Add Violations</div>
+                  <button className="addBtn" onClick={addViolationRow}>
+                    + Add Violation
+                  </button>
+                </div>
+
+                <div className="violationsRows">
+                  {modalViolations.map((v, idx) => (
+                    <div className="violationRow" key={idx}>
+                      <div className="violationRowTop">
+                        <div className="violationLabel">
+                          <span className="warnIcon">⚠</span> Violation {idx + 1}
+                        </div>
+                        {modalViolations.length > 1 ? (
+                          <button className="removeBtn" onClick={() => removeViolationRow(idx)}>
+                            Remove
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <div className="violationInputs">
+                        <input
+                          className="input"
+                          placeholder="Violation Name"
+                          value={v.name}
+                          onChange={(e) => updateViolationRow(idx, { name: e.target.value })}
+                        />
+                        <input
+                          className="input"
+                          placeholder="Fine Amount"
+                          value={v.fine}
+                          onChange={(e) => updateViolationRow(idx, { fine: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="totalFine">
+                  <div className="totalFineLabel">Total Fine Amount</div>
+                  <div className="totalFineValue">{formatMoney(modalTotalFine)}</div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              {msgErr ? <div className="msgError modalMsg">{msgErr}</div> : null}
+              {msg ? <div className="msgSuccess modalMsg">{msg}</div> : null}
+
+              <div className="modalFooter">
                 <button
-                  onClick={() => setCreateOpen(false)}
-                  style={{
-                    border: "none",
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    cursor: "pointer",
-                    fontWeight: 700,
-                    color: "#FFFFFF",
-                    background: "#4A8FF9",
+                  className="secondaryBtn"
+                  onClick={() => {
+                    setCreateOpen(false);
+                    resetCreateModal();
                   }}
                 >
-                  Close
+                  Cancel
+                </button>
+                <button className="primaryBtn" onClick={submitCreateTicketWithViolations}>
+                  Create Ticket
                 </button>
               </div>
             </div>
