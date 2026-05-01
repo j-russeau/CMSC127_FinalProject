@@ -74,7 +74,6 @@ function safeIdPart(s) {
 }
 
 function genViolationId(ticketId, idx) {
-  // predictable, unique enough for demo; change later if you want UUIDs
   const t = safeIdPart(ticketId);
   return `V-${t}-${idx + 1}`;
 }
@@ -121,7 +120,7 @@ export default function Violations() {
   // Modal state
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Step 1: Ticket form (Figma)
+  // Step 1: Ticket form 
   const [ticketForm, setTicketForm] = useState({
     ticket_id: "",
     datetime_local: "", // for input type datetime-local
@@ -134,7 +133,7 @@ export default function Violations() {
     violation_status: "unpaid", // required by backend
   });
 
-  // Step 2: Violations list in modal (Figma)
+  // Step 2: Violations list in modal 
   const [modalViolations, setModalViolations] = useState([
     { name: "", fine: "" }, // start with 1 row
   ]);
@@ -313,7 +312,7 @@ export default function Violations() {
       // 1) Create ticket
       await createTicket(ticketPayload);
 
-      // 2) Create violations under ticket (sequential for simplicity)
+      // 2) Create violations under ticket 
       for (let i = 0; i < cleaned.length; i++) {
         const v = cleaned[i];
         await createViolation({
@@ -543,7 +542,7 @@ export default function Violations() {
         {/* SQL preview */}
         {showSql ? (
           <div className="card codeCard">
-            <div className="codeLabel">SQL used (example)</div>
+            <div className="codeLabel">SQL used</div>
             <pre className="codePre">
 {`-- List tickets
 SELECT *
@@ -564,7 +563,7 @@ WHERE ticket_id = ?;`}
           </div>
         ) : null}
 
-        {/* Create Ticket Modal (Figma-style, Step 1 + Step 2) */}
+        {/* Create Ticket Modal */}
         {createOpen ? (
           <div className="modalOverlay" onClick={() => setCreateOpen(false)}>
             <div className="modal wide" onClick={(e) => e.stopPropagation()}>
@@ -657,7 +656,7 @@ WHERE ticket_id = ?;`}
                   </div>
                 </div>
 
-                {/* keep status hidden/simple but still controllable */}
+                {/* keep status hidden but still controllable */}
                 <div className="hiddenRow">
                   <label>Status</label>
                   <select
