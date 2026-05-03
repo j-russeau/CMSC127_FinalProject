@@ -1,8 +1,32 @@
+import PageShell from "../components/PageShell";
+
 export default function Registrations() {
   return (
-    <div>
-      <h1>Registrations</h1>
-      <p>Vehicle Registration Management page stub.</p>
-    </div>
+    <PageShell>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: "#1D1D1F" }}>Registration Management</div>
+          <div style={{ fontSize: 13, color: "#86868B", marginTop: 4 }}>Manage vehicle registrations and expiry dates</div>
+        </div>
+      </div>
+
+      <div style={{
+        background: "rgba(255,255,255,0.9)",
+        border: "1px solid rgba(255,255,255,0.4)",
+        borderRadius: 18,
+        boxShadow: "0 14px 35px rgba(0,0,0,0.06)",
+        padding: 40,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+        flex: 1,
+      }}>
+        <div style={{ fontSize: 40 }}>📋</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "#1D1D1F" }}>Coming Soon</div>
+        <div style={{ fontSize: 13, color: "#86868B" }}>Registration management is under construction.</div>
+      </div>
+    </PageShell>
   );
 }

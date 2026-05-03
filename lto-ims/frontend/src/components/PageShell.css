@@ -1,0 +1,89 @@
+/* Outer layout */
+.pageShell {
+  display: flex;
+  height: 100vh;
+  padding: 16px;
+  gap: 16px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #F5F7FA 0%, #E4E9F2 100%);
+}
+
+/* Sidebar */
+.pageSidebar {
+  width: 240px;
+  flex-shrink: 0;
+  height: 100%;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.pageSidebarBrand {}
+.pageSidebarBrandTitle { font-weight: 800; color: #1D1D1F; font-size: 15px; }
+.pageSidebarBrandSub { font-size: 12px; color: #86868B; margin-top: 2px; }
+
+.pageSidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pageSidebarNavItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #1D1D1F;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+.pageSidebarNavItem:hover { background: rgba(0, 0, 0, 0.04); }
+.pageSidebarNavItemActive {
+  background: rgba(74, 143, 249, 0.12);
+  color: #4A8FF9;
+  font-weight: 700;
+}
+.pageSidebarNavChevron { font-size: 16px; }
+
+.pageSidebarFooter {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 8px;
+}
+.pageSidebarAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(74, 143, 249, 0.12);
+  display: grid;
+  place-items: center;
+  color: #4A8FF9;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.pageSidebarUserName { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+.pageSidebarUserRole { font-size: 12px; color: #86868B; }
+
+/* Main content area */
+.pageMain {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  box-sizing: border-box;
+}
