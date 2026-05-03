@@ -50,6 +50,7 @@
   border-radius: 12px;
   color: #1D1D1F;
   font-weight: 600;
+  text-decoration: none;
 }
 
 .navItemActive {

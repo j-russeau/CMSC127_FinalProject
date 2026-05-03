@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { listTickets, createTicket } from "../api/tickets";
 import { listViolations, createViolation } from "../api/violations";
+import PageShell from "../components/PageShell";
 import "./Violations.css";
 
 const demoTickets = [
@@ -336,41 +337,8 @@ export default function Violations() {
   }
 
   return (
-    <div className="violationsContainer">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brandTitle">LTO IMS</div>
-          <div className="brandSub">Information Management</div>
-        </div>
-
-        <div className="nav">
-          {[
-            { label: "Dashboard", active: false },
-            { label: "Drivers", active: false },
-            { label: "Vehicles", active: false },
-            { label: "Registrations", active: false },
-            { label: "Violations", active: true },
-            { label: "Reports", active: false },
-          ].map((item) => (
-            <div key={item.label} className={`navItem ${item.active ? "navItemActive" : ""}`}>
-              <span>{item.label}</span>
-              {item.active ? <span className="navChevron">›</span> : null}
-            </div>
-          ))}
-        </div>
-
-        <div className="sidebarFooter">
-          <div className="avatarCircle">A</div>
-          <div>
-            <div className="userName">Admin User</div>
-            <div className="userRole">Administrator</div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main className="main">
+    <PageShell>
+      <>
         {/* Top bar */}
         <div className="topBar">
           <div className="topSearch">
@@ -739,7 +707,7 @@ WHERE ticket_id = ?;`}
             </div>
           </div>
         ) : null}
-      </main>
-    </div>
+      </>
+    </PageShell>
   );
 }

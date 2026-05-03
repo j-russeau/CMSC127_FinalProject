@@ -1,0 +1,481 @@
+/* Layout */
+.driversPage {
+  display: inline-flex;
+  height: 899px;
+  padding-left: 16px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #F5F7FA 0%, #E4E9F2 100%);
+}
+
+/* Sidebar */
+.driversSidebar {
+  width: 240px;
+  height: calc(899px - 32px);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.driversBrandTitle { font-weight: 800; color: #1D1D1F; }
+.driversBrandSub { font-size: 12px; color: #86868B; margin-top: 2px; }
+
+.driversNav { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+.driversNavItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #1D1D1F;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+}
+.driversNavItem:hover { background: rgba(0, 0, 0, 0.04); }
+.driversNavItemActive { background: rgba(74, 143, 249, 0.12); color: #4A8FF9; font-weight: 700; }
+.driversNavChevron { font-size: 16px; }
+
+.driversSidebarFooter {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.driversAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(74, 143, 249, 0.12);
+  display: grid;
+  place-items: center;
+  color: #4A8FF9;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.driversUserName { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+.driversUserRole { font-size: 12px; color: #86868B; }
+
+/* Main */
+.driversMain {
+  flex: 1;
+  height: calc(899px - 32px);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* Top bar */
+.driversTopBar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.driversTopSearch { flex: 1; max-width: 520px; }
+.driversTopRight { display: flex; align-items: center; gap: 10px; }
+.driversDateTime { font-size: 12px; text-align: right; line-height: 1.2; }
+.driversDateText { font-weight: 700; color: #1D1D1F; }
+.driversTimeText { color: #86868B; }
+
+/* Search */
+.driversSearchWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+.driversSearchInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  color: #1D1D1F;
+}
+
+/* Header row */
+.driversHeaderRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.driversPageTitle { font-size: 20px; font-weight: 800; color: #1D1D1F; }
+.driversPageSub { font-size: 13px; color: #86868B; margin-top: 4px; }
+
+/* Cards */
+.driversCard {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 18px;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.06);
+  padding: 16px;
+}
+.driversTableCard { padding: 0; overflow: hidden; }
+
+/* Buttons */
+.driversPrimaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #4F8CFF 0%, #4A87F9 60%, #4785F6 100%);
+  box-shadow: 0 14px 30px rgba(74, 143, 249, 0.25);
+  white-space: nowrap;
+}
+.driversPrimaryBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.driversSecondaryBtn {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  background: #fff;
+  color: #1D1D1F;
+  font-size: 14px;
+}
+
+.driversIconBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #86868B;
+  transition: color 0.15s, background 0.15s;
+}
+.driversIconBtn:hover { background: rgba(0, 0, 0, 0.06); color: #1D1D1F; }
+.driversIconBtn.danger:hover { background: rgba(255, 59, 48, 0.1); color: #FF3B30; }
+
+/* Table */
+.driversTableTitleRow { padding: 14px; display: flex; align-items: center; gap: 12px; }
+.driversTableTitle { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+.driversTableHeader,
+.driversTableRow {
+  display: grid;
+  grid-template-columns: 160px 1fr 60px 60px 160px 110px 80px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+}
+.driversTableHeader { font-size: 12px; color: #86868B; font-weight: 600; padding: 10px 16px; }
+.driversTableRow { border-top: 1px solid rgba(0, 0, 0, 0.05); }
+.driversTableRow:hover { background: rgba(0, 0, 0, 0.015); }
+
+.driversCellStrong { font-weight: 700; color: #1D1D1F; font-size: 14px; }
+.driversCellMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: #1D1D1F;
+  font-weight: 600;
+}
+.driversCell { color: #1D1D1F; font-size: 14px; }
+.driversActionsCell { display: flex; align-items: center; gap: 4px; }
+.driversEmptyState { padding: 24px 16px; color: #86868B; font-size: 14px; }
+
+/* Status pills (table) */
+.driversStatusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: lowercase;
+  white-space: nowrap;
+  background: rgba(134, 134, 139, 0.12);
+  color: #86868B;
+}
+.driversStatusValid { background: rgba(52, 199, 89, 0.12); color: #34C759; }
+.driversStatusExpired { background: rgba(255, 149, 0, 0.12); color: #FF9500; }
+.driversStatusSuspended { background: rgba(255, 59, 48, 0.12); color: #FF3B30; }
+.driversStatusRevoked { background: rgba(255, 59, 48, 0.18); color: #C0392B; }
+
+/* Messages */
+.driversMsgSuccess { color: #34C759; font-weight: 700; font-size: 13px; }
+.driversMsgError { color: #FF3B30; font-weight: 700; font-size: 13px; }
+.driversSoftNote { margin-top: 10px; font-size: 12px; color: #86868B; }
+
+/* Modal overlay (shared by both modals) */
+.driversModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+/* ── ADD DRIVER MODAL ── */
+.driversAddModal {
+  width: 540px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.20);
+}
+
+.driversModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.driversModalTitle { font-size: 20px; font-weight: 800; color: #1D1D1F; }
+.driversModalCloseBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: #F2F2F7;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #1D1D1F;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Form sections */
+.driversFormSection { display: flex; flex-direction: column; gap: 14px; }
+
+.driversFieldFull { display: flex; flex-direction: column; gap: 6px; }
+.driversFieldFull label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+.driversField3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.driversField3 > div { display: flex; flex-direction: column; gap: 6px; }
+.driversField3 label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+.driversField2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.driversField2 > div { display: flex; flex-direction: column; gap: 6px; }
+.driversField2 label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+.driversInput {
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #E5E5EA;
+  outline: none;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  color: #1D1D1F;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.driversInput:focus { border-color: #4A8FF9; box-shadow: 0 0 0 3px rgba(74, 143, 249, 0.12); }
+
+/* Sex toggle */
+.driversSexToggle {
+  display: flex;
+  border-radius: 999px;
+  background: #F2F2F7;
+  padding: 3px;
+  gap: 3px;
+}
+.driversSexBtn {
+  flex: 1;
+  padding: 9px 0;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1D1D1F;
+  transition: background 0.15s, color 0.15s;
+}
+.driversSexBtnActive { background: #4A8FF9; color: #fff; }
+
+/* Status chips */
+.driversStatusChips { display: flex; gap: 8px; flex-wrap: wrap; }
+.driversStatusChip {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid #E5E5EA;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1D1D1F;
+  transition: all 0.15s;
+}
+.driversStatusChipActive { background: #4A8FF9; color: #fff; border-color: #4A8FF9; }
+
+/* Addresses section */
+.driversAddressSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.driversAddressSectionLabel { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+.driversAddAddressBtn {
+  border: 1.5px solid #4A8FF9;
+  background: #fff;
+  color: #4A8FF9;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.driversAddressBlock {
+  background: #F5F7FA;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.driversAddressBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.driversAddressBlockLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4A8FF9;
+}
+.driversAddressRemoveBtn {
+  border: none;
+  background: transparent;
+  color: #86868B;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0;
+}
+.driversAddressBlockFields { display: flex; flex-direction: column; gap: 8px; }
+.driversAddressCityRow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.driversModalFooter {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ── DRIVER SUMMARY MODAL ── */
+.driversSummaryModal {
+  width: 560px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.20);
+}
+
+.driversSummaryHero {
+  background: linear-gradient(135deg, #4F8CFF 0%, #3A7BF0 100%);
+  border-radius: 20px 20px 0 0;
+  padding: 28px 24px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.driversSummaryAvatarLarge {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.driversSummaryHeroInfo { flex: 1; min-width: 0; }
+.driversSummaryName { font-size: 20px; font-weight: 800; color: #fff; line-height: 1.2; }
+.driversSummaryLicense {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 4px;
+}
+.driversSummaryCloseBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 16px;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+.driversSummaryBody { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+.driversSummarySection { display: flex; flex-direction: column; gap: 10px; }
+.driversSummarySectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #86868B;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.driversSummaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.driversSummaryItem { display: flex; flex-direction: column; gap: 2px; }
+.driversSummaryItemLabel { font-size: 11px; color: #86868B; font-weight: 600; }
+.driversSummaryItemValue { font-size: 14px; font-weight: 700; color: #1D1D1F; }
+
+.driversSummaryDivider { height: 1px; background: #F2F2F7; }
+
+.driversSummaryAddresses { display: flex; flex-direction: column; gap: 8px; }
+.driversSummaryAddress {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  color: #1D1D1F;
+}
+.driversSummaryAddressPin { color: #4A8FF9; margin-top: 1px; flex-shrink: 0; }
+.driversSummaryNoAddress { font-size: 13px; color: #86868B; }
+
+.driversSummaryFooter {
+  padding: 0 24px 24px;
+  display: flex;
+  justify-content: flex-end;
+}
