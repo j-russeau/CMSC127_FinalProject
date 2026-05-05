@@ -21,10 +21,14 @@ app.use(express.json());  // parse JSON bodies on all incoming requests
 const driversRouter    = require("./routes/drivers");
 const ticketsRouter    = require("./routes/tickets");
 const violationsRouter = require("./routes/violations");
+const registrationsRouter = require("./routes/registrations");
+const reportsRouter       = require("./routes/reports");
 
 app.use("/api/drivers",    driversRouter);    // CRUD for drivers + addresses
 app.use("/api/tickets",    ticketsRouter);    // CRUD for violation tickets
 app.use("/api/violations", violationsRouter); // CRUD for individual violations
+app.use("/api/registrations", registrationsRouter); // CRUD for new registrations
+app.use("/api/reports",       reportsRouter);
 
 // ── Utility Endpoints ─────────────────────────────────────────────────────────
 
