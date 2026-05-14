@@ -23,7 +23,7 @@ export default function Reports() {
         gap: 10,
         flex: 1,
       }}>
-        <div style={{ fontSize: 40 }}>📊</div>
+        <div style={{ fontSize: 40 }}></div>
         <div style={{ fontSize: 16, fontWeight: 700, color: "#1D1D1F" }}>Coming Soon</div>
         <div style={{ fontSize: 13, color: "#86868B" }}>Reports are under construction.</div>
       </div>

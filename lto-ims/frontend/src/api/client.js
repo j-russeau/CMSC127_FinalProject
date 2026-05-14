@@ -31,6 +31,16 @@ export async function apiPost(path, body) {
   return handle(res);
 }
 
+// Send a PUT request with a JSON body and return the parsed data payload
+export async function apiPut(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method:  "PUT",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify(body),
+  });
+  return handle(res);
+}
+
 // Send a DELETE request and return the parsed data payload
 export async function apiDelete(path) {
   const res = await fetch(`${API_BASE}${path}`, { method: "DELETE" });
