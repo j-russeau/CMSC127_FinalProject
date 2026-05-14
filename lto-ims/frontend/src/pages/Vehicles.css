@@ -1,0 +1,139 @@
+/*
+ * Vehicles.css — styles specific to the Vehicles page.
+ * Shared primitives (card, button, modal, search, input) live in shared.css.
+ */
+
+/* Table grid — 7 columns specific to the vehicles table layout */
+.vehiclesTableHeader,
+.vehiclesTableRow {
+  display: grid;
+  grid-template-columns: 130px 1fr 120px 160px 70px 110px 110px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 20px;
+}
+.vehiclesTableHeader { font-size: 12px; color: #86868B; font-weight: 600; padding: 12px 20px 10px; }
+.vehiclesTableRow { border-top: 1px solid rgba(0, 0, 0, 0.05); }
+.vehiclesTableRow:hover { background: rgba(0, 0, 0, 0.015); }
+
+.vehiclesCellMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D1D1F;
+}
+.vehiclesCell { color: #1D1D1F; font-size: 14px; }
+
+.vehiclesOwnerCell { display: flex; flex-direction: column; gap: 2px; }
+.vehiclesOwnerName { font-size: 14px; font-weight: 600; color: #1D1D1F; }
+.vehiclesOwnerLicense {
+  font-size: 12px;
+  color: #86868B;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.vehiclesColorCell { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #1D1D1F; }
+.vehiclesColorDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.vehiclesExpandCell { display: flex; align-items: center; }
+.vehiclesExpandBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: #4A8FF9;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.vehiclesExpandBtn:hover { opacity: 0.75; }
+
+/* Expanded detail row shown below a vehicle row */
+.vehiclesExpandedRow {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: #F5F7FA;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.vehiclesExpandedGrid { display: flex; gap: 32px; flex-wrap: wrap; }
+.vehiclesExpandedItem { display: flex; flex-direction: column; gap: 3px; }
+.vehiclesExpandedLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #86868B;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.vehiclesExpandedValue { font-size: 14px; font-weight: 600; color: #1D1D1F; }
+.vehiclesMono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+
+/* Composite Vehicle Identity section — blue border to call out the unique-key group */
+.vehiclesIdentitySection {
+  border: 1.5px solid #4A8FF9;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.vehiclesIdentitySectionLabel { font-size: 13px; font-weight: 700; color: #4A8FF9; }
+
+/* Actions group in expanded row — holds Edit and Delete side-by-side */
+.vehiclesExpandedActions { display: flex; align-items: center; gap: 6px; }
+
+/* Edit button — mirrors delete button but blue */
+.vehiclesEditBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4A8FF9;
+  transition: background 0.15s;
+}
+.vehiclesEditBtn:hover { background: rgba(74, 143, 249, 0.1); }
+
+/* Inline delete button inside expanded row — needs label text so it's wider than iconBtn */
+.vehiclesDeleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FF3B30;
+  transition: background 0.15s;
+}
+.vehiclesDeleteBtn:hover { background: rgba(255, 59, 48, 0.1); }
+
+/* Add vehicle modal — fixed width */
+.vehiclesAddModal {
+  width: 560px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.20);
+}

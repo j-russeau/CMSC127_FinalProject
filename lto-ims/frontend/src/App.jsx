@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import "./shared.css";
 
+import Dashboard from "./pages/Dashboard";
 import Drivers from "./pages/Drivers";
 import Vehicles from "./pages/Vehicles";
 import Registrations from "./pages/Registrations";
@@ -10,7 +12,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/drivers" replace />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/drivers" element={<Drivers />} />
         <Route path="/vehicles" element={<Vehicles />} />
         <Route path="/registrations" element={<Registrations />} />
