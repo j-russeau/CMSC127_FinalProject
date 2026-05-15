@@ -9,6 +9,17 @@ const router  = express.Router();
 const db      = require("../db");
 const Q       = require("../sql/violationsQueries");
 
+// Expose violation catalog to frontend
+const catalog = require("../constants/violationCatalog");
+
+router.get("/catalog", (req, res) => {
+  const items = Object.entries(catalog).map(([name, fine]) => ({
+    name,
+    corresponding_fine_amount: fine,
+  }));
+  res.json({ ok: true, data: items });
+});
+
 // ── GET /api/violations?ticket_id=... ────────────────────────────────────────
 // Returns all violations that belong to a given ticket.
 // ticket_id is required — violations are always fetched in the context of a ticket.
@@ -35,12 +46,25 @@ router.post("/", async (req, res) => {
   try {
     const v = req.body;
 
-    // All four fields are required by the database schema
+    // All four fields are required
     const required = ["violation_id", "name", "corresponding_fine_amount", "ticket_id"];
     for (const f of required) {
       if (v[f] === undefined || v[f] === null || v[f] === "") {
         return res.status(400).json({ ok: false, error: `Missing required field: ${f}` });
       }
+    }
+
+    // Validate type exists
+    if (!catalog[v.name]) {
+      return res.status(400).json({ ok: false, error: "Invalid violation type" });
+    }
+
+    // Force fine to catalog (real-world behavior)
+    v.corresponding_fine_amount = catalog[v.name];
+
+    // Length safety
+    if (String(v.violation_id).length > 20) {
+      return res.status(400).json({ ok: false, error: "violation_id too long (max 20)" });
     }
 
     const params = [v.violation_id, v.name, v.corresponding_fine_amount, v.ticket_id];
@@ -50,11 +74,9 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error(err);
 
-    // Duplicate violation_id
     if (err.code === "ER_DUP_ENTRY") {
       return res.status(409).json({ ok: false, error: "violation_id already exists" });
     }
-    // Referenced ticket_id does not exist
     if (err.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(400).json({ ok: false, error: "ticket_id does not exist (FK)" });
     }

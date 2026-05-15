@@ -7,8 +7,8 @@ import { apiGet, apiPost } from "./client";
 
 // Fetch all violations belonging to a specific ticket.
 // ticketId is URL-encoded to handle special characters safely.
-export const listViolations = (ticketId) =>
-  apiGet(`/api/violations?ticket_id=${encodeURIComponent(ticketId)}`);
+export const listViolations = (ticketId) => apiGet(`/api/violations?ticket_id=${encodeURIComponent(ticketId)}`);
+export const getViolationCatalog = () => apiGet("/api/violations/catalog");
 
 // Create a new violation under an existing ticket.
 // payload shape: { violation_id, name, corresponding_fine_amount, ticket_id }

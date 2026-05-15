@@ -6,27 +6,6 @@ import ConfirmModal from "../components/ConfirmModal";
 import { fullName } from "../utils";
 import "./Vehicles.css";
 
-const demoVehicles = [
-  {
-    plate_number: "ABC-1234", engine_number: "ENG-2023-001", chassis_number: "CHS-2023-001",
-    year: 2023, color: "Silver", model: "Vios", make: "Toyota", vehicle_type: "Sedan",
-    owner_license_number: "N01-12-345678",
-    first_name: "Juan", middle_name: "Santos", last_name: "dela Cruz",
-  },
-  {
-    plate_number: "XYZ-5678", engine_number: "ENG-2022-002", chassis_number: "CHS-2022-002",
-    year: 2022, color: "White", model: "City", make: "Honda", vehicle_type: "Sedan",
-    owner_license_number: "N02-13-456789",
-    first_name: "Maria", middle_name: "Cruz", last_name: "Santos",
-  },
-  {
-    plate_number: "DEF-9012", engine_number: "ENG-2024-003", chassis_number: "CHS-2024-003",
-    year: 2024, color: "Blue", model: "Mio", make: "Yamaha", vehicle_type: "Motorcycle",
-    owner_license_number: "N03-14-567890",
-    first_name: "Pedro", middle_name: "Lopez", last_name: "Garcia",
-  },
-];
-
 const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus", "Truck"];
 
 /* ── Small reusable components ── */
