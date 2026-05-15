@@ -7,6 +7,7 @@ const express = require("express");
 const router  = express.Router();
 const db      = require("../db");
 const Q       = require("../sql/ticketsQueries");
+const catalog = require("../constants/violationCatalog");
 
 // ── GET /api/tickets ──────────────────────────────────────────────────────────
 // Returns all tickets. Accepts optional ?license_number=... to filter by driver.
@@ -61,10 +62,30 @@ router.post("/with-violations", async (req, res) => {
 
   for (let i = 0; i < violations.length; i++) {
     const v = violations[i];
-    if (!v.violation_id || !v.name || v.corresponding_fine_amount == null) {
-      return res.status(400).json({ ok: false, error: `Violation ${i + 1}: violation_id, name, and corresponding_fine_amount are required` });
+
+    // Validate violation type exists
+    if (!catalog[v.name]) {
+      return res.status(400).json({ ok: false, error: `Violation ${i + 1}: invalid violation type` });
+    }
+
+    // Force fine to be the catalog fine 
+    v.corresponding_fine_amount = catalog[v.name];
+
+    // Prevents "Data too long..." errors
+    if (String(v.violation_id).length > 20) {
+      return res.status(400).json({ ok: false, error: `Violation ${i + 1}: violation_id too long (max 20)` });
     }
   }
+
+  if (String(t.ticket_id).length > 20) {
+    return res.status(400).json({ ok: false, error: "ticket_id too long (max 20)" });
+  }
+
+  const validStatus = ["paid", "unpaid", "contested"];
+  if (!validStatus.includes(t.violation_status)) {
+    return res.status(400).json({ ok: false, error: "violation_status must be paid, unpaid, or contested" });
+  }
+    
 
   const conn = await db.getConnection();
   try {
