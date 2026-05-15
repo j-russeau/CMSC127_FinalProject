@@ -1,6 +1,17 @@
 -- db/seed.sql
 USE lto_db;
 
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE TABLE violation;
+TRUNCATE TABLE violation_ticket;
+TRUNCATE TABLE registration;
+TRUNCATE TABLE vehicle;
+TRUNCATE TABLE driver_has_address;
+TRUNCATE TABLE driver;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- Dummy data setup
 -- 1. Insert into driver
 -- Includes D06-11-009385 (Professional, Valid, Male, Age between 18-60) to satisfy Query 1, 2, and 5
@@ -34,10 +45,13 @@ INSERT INTO registration VALUES
 -- TKT-001 is for D06-11-009385, happens in 2026, and in Quezon City to satisfy Queries 5, 6, and 7
 INSERT INTO violation_ticket VALUES 
 ('TKT-001', '2026-05-20 14:30:00', 'unpaid', 'Commonwealth Ave, Quezon City', 'Officer Bato', 'D06-11-009385', 'ABC-1234', 'ENG001', 'CHAS001'),
-('TKT-002', '2026-08-15 09:00:00', 'paid', 'EDSA, Quezon City', 'Officer Dalisay', 'A01-22-111111', 'DEF-5678', 'ENG003', 'CHAS003');
+('TKT-002', '2026-08-15 09:00:00', 'paid', 'EDSA, Quezon City', 'Officer Dalisay', 'A01-22-111111', 'DEF-5678', 'ENG003', 'CHAS003'),
+('TKT-003','2026-06-01 10:00:00','unpaid','Quezon City','Officer A','D06-11-009385','ABC-1234','ENG001','CHAS001');
 
 -- 6. Insert into violation
 INSERT INTO violation VALUES 
 ('V-001', 'Overspeeding', 1500.00, 'TKT-001'),
 ('V-002', 'Reckless Driving', 2000.00, 'TKT-001'),
-('V-003', 'Overspeeding', 1500.00, 'TKT-002');
+('V-003', 'Overspeeding', 1500.00, 'TKT-002'),
+('V-004','Overspeeding',1500.00,'TKT-003'),
+('V-005','Illegal Parking',500.00,'TKT-003');
