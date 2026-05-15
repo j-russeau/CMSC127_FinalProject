@@ -43,6 +43,8 @@ const demoTickets = [
   },
 ];
 
+const SHOW_SQL = (import.meta.env.VITE_SHOW_SQL || "false") === "true";
+
 function toMysqlDateTime(datetimeLocalValue) {
   if (!datetimeLocalValue) return "";
   const s = datetimeLocalValue.replace("T", " ");
@@ -360,9 +362,11 @@ export default function Violations() {
       <>
         <div className="topBar">
           <div className="topRight">
-            <button className="codeBtn" onClick={() => setShowSql((v) => !v)} title="Show SQL">
-              {"</>"}
-            </button>
+            {SHOW_SQL && (
+              <button className="codeBtn" onClick={() => setShowSql(v => !v)} title="Show SQL">
+                {"</>"}
+              </button>
+            )}
             <div className="dateTime">
               <div className="dateText">{now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "2-digit" })}</div>
               <div className="timeText">{now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</div>
@@ -567,7 +571,7 @@ export default function Violations() {
         ) : null}
 
         {/* SQL preview */}
-        {showSql && (
+        {SHOW_SQL && (
           <div className="card codeCard">
             <div className="codeLabel">SQL used</div>
             <pre className="codePre">{`-- List tickets
