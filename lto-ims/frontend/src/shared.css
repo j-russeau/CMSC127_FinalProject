@@ -1,0 +1,268 @@
+/*
+ * shared.css — Design-system primitives shared across all pages.
+ *
+ * Previously each page had its own copy of buttons, cards, modals, and search
+ * with a different prefix (driversCard, vehiclesCard, .card) but identical rules.
+ * Changing the card shadow or button color meant editing 3 files in sync.
+ * These classes use no prefix so every page can import and use them directly.
+ */
+
+/* ── Avatar ── */
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(74, 143, 249, 0.12);
+  display: grid;
+  place-items: center;
+  color: #4A8FF9;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ── Top bar ── */
+.topBar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.topRight { display: flex; align-items: center; gap: 10px; }
+.dateTime { font-size: 12px; text-align: right; line-height: 1.2; }
+.dateText { font-weight: 700; color: #1D1D1F; }
+.timeText { color: #86868B; }
+
+/* ── Search ── */
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+.searchInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  color: #1D1D1F;
+}
+
+/* ── Page header ── */
+.headerRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.pageTitle { font-size: 20px; font-weight: 800; color: #1D1D1F; }
+.pageSub { font-size: 13px; color: #86868B; margin-top: 4px; }
+
+/* ── Cards ── */
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 18px;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.06);
+  padding: 16px;
+}
+.tableCard { padding: 0; overflow: hidden; }
+.tableTitleRow { padding: 14px; display: flex; align-items: center; gap: 12px; }
+.tableTitle { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+/* ── Buttons ── */
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #4F8CFF 0%, #4A87F9 60%, #4785F6 100%);
+  box-shadow: 0 14px 30px rgba(74, 143, 249, 0.25);
+  white-space: nowrap;
+}
+.primaryBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.secondaryBtn {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  background: #fff;
+  color: #1D1D1F;
+  font-size: 14px;
+}
+
+.iconBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #86868B;
+  transition: color 0.15s, background 0.15s;
+}
+.iconBtn:hover { background: rgba(0, 0, 0, 0.06); color: #1D1D1F; }
+.iconBtn.danger:hover { background: rgba(255, 59, 48, 0.1); color: #FF3B30; }
+
+/* ── Form inputs ── */
+.input {
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #E5E5EA;
+  outline: none;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  color: #1D1D1F;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: auto;
+}
+.input:focus { border-color: #4A8FF9; box-shadow: 0 0 0 3px rgba(74, 143, 249, 0.12); }
+
+.formSection { display: flex; flex-direction: column; gap: 14px; }
+
+.fieldFull { display: flex; flex-direction: column; gap: 6px; }
+.fieldFull label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+.field2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field2 > div { display: flex; flex-direction: column; gap: 6px; }
+.field2 label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+.field3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.field3 > div { display: flex; flex-direction: column; gap: 6px; }
+.field3 label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+/* ── Modal ── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.modalTitle { font-size: 20px; font-weight: 800; color: #1D1D1F; }
+.modalCloseBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: #F2F2F7;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #1D1D1F;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modalFooter {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ── Feedback ── */
+.msgSuccess { color: #34C759; font-weight: 700; font-size: 13px; }
+.msgError   { color: #FF3B30; font-weight: 700; font-size: 13px; }
+.softNote   { margin-top: 10px; font-size: 12px; color: #86868B; }
+.emptyState { padding: 24px 16px; color: #86868B; font-size: 14px; }
+
+/* ── Danger button ── */
+.dangerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  background: #FF3B30;
+  white-space: nowrap;
+}
+.dangerBtn:hover    { opacity: 0.85; }
+.dangerBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Confirm modal ── */
+.confirmModal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 28px 24px;
+  width: 360px;
+  max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  text-align: center;
+}
+.confirmMessage {
+  font-size: 14px;
+  color: #1D1D1F;
+  line-height: 1.65;
+  margin-bottom: 24px;
+}
+.confirmFooter { display: flex; gap: 10px; justify-content: center; }
+
+/* ── Toast notifications ── */
+.toastList {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+  max-width: 340px;
+  animation: toastIn 0.22s ease;
+}
+.toastSuccess { background: #34C759; color: #fff; }
+.toastError   { background: #FF3B30; color: #fff; }
+.toastMsg     { flex: 1; line-height: 1.4; }
+.toastClose {
+  border: none;
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+  border-radius: 999px;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 11px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Selected table row ── */
+.selectedRow { background: rgba(74, 143, 249, 0.07) !important; }

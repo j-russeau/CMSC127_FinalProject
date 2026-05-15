@@ -1,8 +1,568 @@
-export default function Vehicles() {
+import React, { useEffect, useMemo, useState } from "react";
+import { listVehicles, createVehicle, updateVehicle, deleteVehicle } from "../api/vehicles";
+import PageShell from "../components/PageShell";
+import { useToast, ToastList } from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
+import { fullName } from "../utils";
+import "./Vehicles.css";
+
+const demoVehicles = [
+  {
+    plate_number: "ABC-1234", engine_number: "ENG-2023-001", chassis_number: "CHS-2023-001",
+    year: 2023, color: "Silver", model: "Vios", make: "Toyota", vehicle_type: "Sedan",
+    owner_license_number: "N01-12-345678",
+    first_name: "Juan", middle_name: "Santos", last_name: "dela Cruz",
+  },
+  {
+    plate_number: "XYZ-5678", engine_number: "ENG-2022-002", chassis_number: "CHS-2022-002",
+    year: 2022, color: "White", model: "City", make: "Honda", vehicle_type: "Sedan",
+    owner_license_number: "N02-13-456789",
+    first_name: "Maria", middle_name: "Cruz", last_name: "Santos",
+  },
+  {
+    plate_number: "DEF-9012", engine_number: "ENG-2024-003", chassis_number: "CHS-2024-003",
+    year: 2024, color: "Blue", model: "Mio", make: "Yamaha", vehicle_type: "Motorcycle",
+    owner_license_number: "N03-14-567890",
+    first_name: "Pedro", middle_name: "Lopez", last_name: "Garcia",
+  },
+];
+
+const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus", "Truck"];
+
+/* ── Small reusable components ── */
+
+/*
+ * Renders a colored circle swatch using the color name directly as a CSS value.
+ * Works for standard English color names (Silver, White, Blue, Black, Red).
+ */
+function ColorDot({ color }) {
   return (
-    <div>
-      <h1>Vehicles</h1>
-      <p>Vehicle Management page stub.</p>
+    <span className="vehiclesColorDot" style={{ background: color.toLowerCase() }} title={color} />
+  );
+}
+
+function SearchInput({ value, onChange, placeholder }) {
+  return (
+    <div className="searchWrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="#86868B" strokeWidth="2" />
+        <path d="M16.5 16.5 21 21" stroke="#86868B" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+      <input className="searchInput" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
     </div>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M3 6h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M8 6V4h8v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronDown() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronUp() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M18 15l-6-6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const emptyForm = {
+  plate_number: "", engine_number: "", chassis_number: "",
+  make: "", model: "",
+  year: new Date().getFullYear().toString(),
+  color: "", vehicle_type: "", owner_license_number: "",
+};
+
+/* ── Main Page ── */
+
+export default function Vehicles() {
+  const [query, setQuery]         = useState("");
+  const [vehicles, setVehicles]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [apiErr, setApiErr]       = useState("");
+  const [expandedPlate, setExpandedPlate] = useState(null);
+
+  const [addOpen, setAddOpen]       = useState(false);
+  const [addErr, setAddErr]         = useState("");
+  const [form, setForm]             = useState(emptyForm);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [editingVehicle, setEditingVehicle]   = useState(null);
+  const [editForm, setEditForm]               = useState({});
+  const [editErr, setEditErr]                 = useState("");
+  const [editSubmitting, setEditSubmitting]   = useState(false);
+
+  const [pendingDelete, setPendingDelete] = useState(null);
+
+  const { toasts, toast, dismiss } = useToast();
+
+  /*
+   * Live clock — new Date() directly in JSX freezes at mount time.
+   */
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  /* Fetch or re-fetch the vehicle list. Falls back to demo data when the API is down. */
+  async function refresh() {
+    setLoading(true);
+    setApiErr("");
+    try {
+      const rows = await listVehicles();
+      setVehicles(rows || []);
+    } catch (e) {
+      setVehicles(demoVehicles);
+      setApiErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { refresh(); }, []);
+
+  /* Client-side search — useMemo avoids re-filtering on unrelated state changes. */
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return vehicles;
+    return vehicles.filter((v) => {
+      const hay = [
+        v.plate_number, fullName(v), v.owner_license_number,
+        v.make, v.model, v.vehicle_type, v.color,
+      ].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [vehicles, query]);
+
+  function openAdd() {
+    setForm(emptyForm);
+    setAddErr("");
+    setAddOpen(true);
+  }
+
+  function patchForm(key, val) {
+    setForm((prev) => ({ ...prev, [key]: val }));
+  }
+
+  /* Validates the form and sends a POST to create the vehicle. */
+  async function submitAdd() {
+    setAddErr("");
+
+    const required = [
+      ["Plate number", form.plate_number],
+      ["Engine number", form.engine_number],
+      ["Chassis number", form.chassis_number],
+      ["Make", form.make],
+      ["Model", form.model],
+      ["Year", form.year],
+      ["Color", form.color],
+      ["Vehicle type", form.vehicle_type],
+      ["Owner (Driver License Number)", form.owner_license_number],
+    ];
+    for (const [label, val] of required) {
+      if (!val || !String(val).trim()) { setAddErr(`${label} is required.`); return; }
+    }
+    const yr = parseInt(form.year, 10);
+    if (isNaN(yr) || yr < 1900 || yr > new Date().getFullYear() + 1) {
+      setAddErr("Enter a valid year."); return;
+    }
+
+    setSubmitting(true);
+    try {
+      await createVehicle({
+        plate_number:         form.plate_number.trim(),
+        engine_number:        form.engine_number.trim(),
+        chassis_number:       form.chassis_number.trim(),
+        make:                 form.make.trim(),
+        model:                form.model.trim(),
+        year:                 yr,
+        color:                form.color.trim(),
+        vehicle_type:         form.vehicle_type.trim(),
+        owner_license_number: form.owner_license_number.trim(),
+      });
+      setAddOpen(false);
+      toast("Vehicle added successfully.");
+      await refresh();
+    } catch (e) {
+      setAddErr(e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function openEdit(vehicle) {
+    setEditForm({
+      make:                 vehicle.make || "",
+      model:                vehicle.model || "",
+      year:                 String(vehicle.year || ""),
+      color:                vehicle.color || "",
+      vehicle_type:         vehicle.vehicle_type || "",
+      owner_license_number: vehicle.owner_license_number || "",
+    });
+    setEditErr("");
+    setEditingVehicle(vehicle);
+  }
+
+  function patchEditForm(key, val) {
+    setEditForm((prev) => ({ ...prev, [key]: val }));
+  }
+
+  /*
+   * Sends a PUT for the non-key fields only. plate_number, engine_number, and
+   * chassis_number are omitted — they are the composite FK that links to
+   * violation_ticket and registration and cannot safely change.
+   */
+  async function submitEdit() {
+    setEditErr("");
+
+    const yr = parseInt(editForm.year, 10);
+    if (!editForm.make.trim())   { setEditErr("Make is required."); return; }
+    if (!editForm.model.trim())  { setEditErr("Model is required."); return; }
+    if (isNaN(yr) || yr < 1900 || yr > new Date().getFullYear() + 1) { setEditErr("Enter a valid year."); return; }
+    if (!editForm.color.trim())  { setEditErr("Color is required."); return; }
+    if (!editForm.vehicle_type)  { setEditErr("Vehicle type is required."); return; }
+    if (!editForm.owner_license_number.trim()) { setEditErr("Owner license number is required."); return; }
+
+    setEditSubmitting(true);
+    try {
+      await updateVehicle(editingVehicle.plate_number, {
+        make:                 editForm.make.trim(),
+        model:                editForm.model.trim(),
+        year:                 yr,
+        color:                editForm.color.trim(),
+        vehicle_type:         editForm.vehicle_type,
+        owner_license_number: editForm.owner_license_number.trim(),
+      });
+      setEditingVehicle(null);
+      toast("Vehicle updated successfully.");
+      await refresh();
+    } catch (e) {
+      setEditErr(e.message);
+    } finally {
+      setEditSubmitting(false);
+    }
+  }
+
+  function handleDelete(plateNumber) {
+    setPendingDelete(plateNumber);
+  }
+
+  async function confirmDelete() {
+    const plateNumber = pendingDelete;
+    setPendingDelete(null);
+    try {
+      await deleteVehicle(plateNumber);
+      if (expandedPlate === plateNumber) setExpandedPlate(null);
+      await refresh();
+      toast("Vehicle deleted.");
+    } catch (e) {
+      toast(e.message, "error");
+    }
+  }
+
+  const dateStr = now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "2-digit" });
+  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <PageShell>
+      <div className="topBar">
+        <div className="topRight">
+          <div className="dateTime">
+            <div className="dateText">{dateStr}</div>
+            <div className="timeText">{timeStr}</div>
+          </div>
+          <div className="avatar">A</div>
+        </div>
+      </div>
+
+      <div className="headerRow">
+        <div>
+          <div className="pageTitle">Vehicle Management</div>
+          <div className="pageSub">Manage vehicle registrations and ownership</div>
+        </div>
+        <button className="primaryBtn" onClick={openAdd}>+ Add Vehicle</button>
+      </div>
+
+      <div className="card">
+        <SearchInput value={query} onChange={setQuery} placeholder="Search by plate number, owner, or make/model..." />
+        {apiErr && <div className="softNote">Using demo data (API not reachable): {apiErr}</div>}
+      </div>
+
+      <div className="card tableCard">
+        <div className="tableTitleRow">
+          <div className="tableTitle">
+            {loading ? "Loading..." : `Vehicles (${filtered.length})`}
+          </div>
+        </div>
+        <div className="vehiclesTableHeader">
+          <div>Plate Number</div>
+          <div>Owner</div>
+          <div>Vehicle Type</div>
+          <div>Make / Model</div>
+          <div>Year</div>
+          <div>Color</div>
+          <div>Details</div>
+        </div>
+
+        {!loading && filtered.length === 0 && (
+          <div className="emptyState">No vehicles found.</div>
+        )}
+
+        {filtered.map((v) => {
+          const expanded = expandedPlate === v.plate_number;
+          return (
+            <React.Fragment key={v.plate_number}>
+              <div className="vehiclesTableRow">
+                <div className="vehiclesCellMono">{v.plate_number}</div>
+                <div className="vehiclesOwnerCell">
+                  <span className="vehiclesOwnerName">{fullName(v)}</span>
+                  <span className="vehiclesOwnerLicense">{v.owner_license_number}</span>
+                </div>
+                <div className="vehiclesCell">{v.vehicle_type}</div>
+                <div className="vehiclesCell">{v.make} {v.model}</div>
+                <div className="vehiclesCell">{v.year}</div>
+                <div className="vehiclesColorCell">
+                  <ColorDot color={v.color} />
+                  <span>{v.color}</span>
+                </div>
+                <div className="vehiclesExpandCell">
+                  <button className="vehiclesExpandBtn"
+                    onClick={() => setExpandedPlate(expanded ? null : v.plate_number)}>
+                    {expanded ? <ChevronUp /> : <ChevronDown />}
+                    {expanded ? "Collapse" : "Expand"}
+                  </button>
+                </div>
+              </div>
+
+              {expanded && (
+                <div className="vehiclesExpandedRow">
+                  <div className="vehiclesExpandedGrid">
+                    <div className="vehiclesExpandedItem">
+                      <div className="vehiclesExpandedLabel">Engine Number</div>
+                      <div className="vehiclesExpandedValue vehiclesMono">{v.engine_number}</div>
+                    </div>
+                    <div className="vehiclesExpandedItem">
+                      <div className="vehiclesExpandedLabel">Chassis Number</div>
+                      <div className="vehiclesExpandedValue vehiclesMono">{v.chassis_number}</div>
+                    </div>
+                    <div className="vehiclesExpandedItem">
+                      <div className="vehiclesExpandedLabel">Owner License</div>
+                      <div className="vehiclesExpandedValue vehiclesMono">{v.owner_license_number}</div>
+                    </div>
+                  </div>
+                  <div className="vehiclesExpandedActions">
+                    <button className="vehiclesEditBtn" onClick={() => openEdit(v)}>
+                      <PencilIcon /> Edit
+                    </button>
+                    <button className="vehiclesDeleteBtn" onClick={() => handleDelete(v.plate_number)}>
+                      <TrashIcon /> Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+
+        {loading && <div className="emptyState">Loading...</div>}
+      </div>
+
+      {/* ── Edit Modal ── */}
+      {editingVehicle && (
+        <div className="modalOverlay" onClick={() => setEditingVehicle(null)}>
+          <div className="vehiclesAddModal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div className="modalTitle">Edit Vehicle</div>
+              <button className="modalCloseBtn" onClick={() => setEditingVehicle(null)}>✕</button>
+            </div>
+
+            <div className="formSection">
+              <div className="vehiclesIdentitySection">
+                <div className="vehiclesIdentitySectionLabel">Composite Vehicle Identity (read-only)</div>
+                <div className="fieldFull">
+                  <label style={{ color: "#86868B" }}>Plate Number</label>
+                  <input className="input" value={editingVehicle.plate_number} disabled style={{ opacity: 0.5 }} />
+                </div>
+                <div className="fieldFull">
+                  <label style={{ color: "#86868B" }}>Engine Number</label>
+                  <input className="input" value={editingVehicle.engine_number} disabled style={{ opacity: 0.5 }} />
+                </div>
+                <div className="fieldFull">
+                  <label style={{ color: "#86868B" }}>Chassis Number</label>
+                  <input className="input" value={editingVehicle.chassis_number} disabled style={{ opacity: 0.5 }} />
+                </div>
+              </div>
+
+              <div className="field2">
+                <div>
+                  <label>Make</label>
+                  <input className="input" placeholder="Toyota"
+                    value={editForm.make} onChange={(e) => patchEditForm("make", e.target.value)} />
+                </div>
+                <div>
+                  <label>Model</label>
+                  <input className="input" placeholder="Vios"
+                    value={editForm.model} onChange={(e) => patchEditForm("model", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="field3">
+                <div>
+                  <label>Year</label>
+                  <input className="input" type="number" placeholder="2024"
+                    value={editForm.year} onChange={(e) => patchEditForm("year", e.target.value)} />
+                </div>
+                <div>
+                  <label>Color</label>
+                  <input className="input" placeholder="Silver"
+                    value={editForm.color} onChange={(e) => patchEditForm("color", e.target.value)} />
+                </div>
+                <div>
+                  <label>Vehicle Type</label>
+                  <select className="input" value={editForm.vehicle_type} onChange={(e) => patchEditForm("vehicle_type", e.target.value)}>
+                    <option value="">Select type</option>
+                    {VEHICLE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="fieldFull">
+                <label>Owner (Driver License Number)</label>
+                <input className="input" placeholder="N01-12-345678"
+                  value={editForm.owner_license_number} onChange={(e) => patchEditForm("owner_license_number", e.target.value)} />
+              </div>
+
+              {editErr && <div className="msgError">{editErr}</div>}
+            </div>
+
+            <div className="modalFooter">
+              <button className="secondaryBtn" onClick={() => setEditingVehicle(null)}>Cancel</button>
+              <button className="primaryBtn" onClick={submitEdit} disabled={editSubmitting}>
+                {editSubmitting ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Modal ── */}
+      {addOpen && (
+        <div className="modalOverlay" onClick={() => setAddOpen(false)}>
+          <div className="vehiclesAddModal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div className="modalTitle">Add New Vehicle</div>
+              <button className="modalCloseBtn" onClick={() => setAddOpen(false)}>✕</button>
+            </div>
+
+            <div className="formSection">
+              {/*
+               * Composite Vehicle Identity — plate, engine, chassis together form the
+               * composite unique key that links vehicle → registration → violation_ticket.
+               */}
+              <div className="vehiclesIdentitySection">
+                <div className="vehiclesIdentitySectionLabel">Composite Vehicle Identity</div>
+                <div className="fieldFull">
+                  <label>Plate Number</label>
+                  <input className="input" placeholder="ABC-1234"
+                    value={form.plate_number} onChange={(e) => patchForm("plate_number", e.target.value)} />
+                </div>
+                <div className="fieldFull">
+                  <label>Engine Number (Unique)</label>
+                  <input className="input" placeholder="ENG-2024-001"
+                    value={form.engine_number} onChange={(e) => patchForm("engine_number", e.target.value)} />
+                </div>
+                <div className="fieldFull">
+                  <label>Chassis Number (Unique)</label>
+                  <input className="input" placeholder="CHS-2024-001"
+                    value={form.chassis_number} onChange={(e) => patchForm("chassis_number", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="field2">
+                <div>
+                  <label>Make</label>
+                  <input className="input" placeholder="Toyota"
+                    value={form.make} onChange={(e) => patchForm("make", e.target.value)} />
+                </div>
+                <div>
+                  <label>Model</label>
+                  <input className="input" placeholder="Vios"
+                    value={form.model} onChange={(e) => patchForm("model", e.target.value)} />
+                </div>
+              </div>
+
+              <div className="field3">
+                <div>
+                  <label>Year</label>
+                  <input className="input" type="number" placeholder="2024"
+                    value={form.year} onChange={(e) => patchForm("year", e.target.value)} />
+                </div>
+                <div>
+                  <label>Color</label>
+                  <input className="input" placeholder="Silver"
+                    value={form.color} onChange={(e) => patchForm("color", e.target.value)} />
+                </div>
+                <div>
+                  <label>Vehicle Type</label>
+                  <select className="input" value={form.vehicle_type} onChange={(e) => patchForm("vehicle_type", e.target.value)}>
+                    <option value="">Select type</option>
+                    {VEHICLE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="fieldFull">
+                <label>Owner (Driver License Number)</label>
+                <input className="input" placeholder="N01-12-345678"
+                  value={form.owner_license_number} onChange={(e) => patchForm("owner_license_number", e.target.value)} />
+              </div>
+
+              {addErr && <div className="msgError">{addErr}</div>}
+            </div>
+
+            <div className="modalFooter">
+              <button className="secondaryBtn" onClick={() => setAddOpen(false)}>Cancel</button>
+              <button className="primaryBtn" onClick={submitAdd} disabled={submitting}>
+                {submitting ? "Saving..." : "Add Vehicle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation ── */}
+      {pendingDelete && (
+        <ConfirmModal
+          message={`Delete vehicle ${pendingDelete}? This cannot be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
+
+      <ToastList toasts={toasts} onDismiss={dismiss} />
+    </PageShell>
   );
 }

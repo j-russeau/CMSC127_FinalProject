@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Navbar from "./components/Navbar";
+import "./shared.css";
 
+import Dashboard from "./pages/Dashboard";
 import Drivers from "./pages/Drivers";
 import Vehicles from "./pages/Vehicles";
 import Registrations from "./pages/Registrations";
@@ -10,20 +11,15 @@ import Reports from "./pages/Reports";
 export default function App() {
   return (
     <BrowserRouter>
-      <Navbar />
-
-      <div style={{ padding: "16px" }}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/drivers" replace />} />
-          <Route path="/drivers" element={<Drivers />} />
-          <Route path="/vehicles" element={<Vehicles />} />
-          <Route path="/registrations" element={<Registrations />} />
-          <Route path="/violations" element={<Violations />} />
-          <Route path="/reports" element={<Reports />} />
-
-          <Route path="*" element={<h2>404 - Page not found</h2>} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/drivers" element={<Drivers />} />
+        <Route path="/vehicles" element={<Vehicles />} />
+        <Route path="/registrations" element={<Registrations />} />
+        <Route path="/violations" element={<Violations />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="*" element={<Navigate to="/drivers" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 }

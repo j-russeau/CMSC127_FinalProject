@@ -1,0 +1,235 @@
+/*
+ * Drivers.css — styles specific to the Drivers page.
+ * Shared primitives (card, button, modal, search, input) live in shared.css.
+ */
+
+/* Table grid — 7 columns specific to the drivers table layout */
+.driversTableHeader,
+.driversTableRow {
+  display: grid;
+  grid-template-columns: 160px 1fr 60px 60px 160px 110px 80px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+}
+.driversTableHeader { font-size: 12px; color: #86868B; font-weight: 600; padding: 10px 16px; }
+.driversTableRow { border-top: 1px solid rgba(0, 0, 0, 0.05); }
+.driversTableRow:hover { background: rgba(0, 0, 0, 0.015); }
+
+.driversCellStrong { font-weight: 700; color: #1D1D1F; font-size: 14px; }
+.driversCellMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: #1D1D1F;
+  font-weight: 600;
+}
+.driversCell { color: #1D1D1F; font-size: 14px; }
+.driversActionsCell { display: flex; align-items: center; gap: 4px; }
+
+/* Status pills */
+.driversStatusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: lowercase;
+  white-space: nowrap;
+  background: rgba(134, 134, 139, 0.12);
+  color: #86868B;
+}
+.driversStatusValid   { background: rgba(52, 199, 89, 0.12);  color: #34C759; }
+.driversStatusExpired { background: rgba(255, 149, 0, 0.12);  color: #FF9500; }
+.driversStatusSuspended { background: rgba(255, 59, 48, 0.12); color: #FF3B30; }
+.driversStatusRevoked { background: rgba(255, 59, 48, 0.18);  color: #C0392B; }
+
+/* Sex toggle */
+.driversSexToggle {
+  display: flex;
+  border-radius: 999px;
+  background: #F2F2F7;
+  padding: 3px;
+  gap: 3px;
+}
+.driversSexBtn {
+  flex: 1;
+  padding: 9px 0;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1D1D1F;
+  transition: background 0.15s, color 0.15s;
+}
+.driversSexBtnActive { background: #4A8FF9; color: #fff; }
+
+/* Status chips (form) */
+.driversStatusChips { display: flex; gap: 8px; flex-wrap: wrap; }
+.driversStatusChip {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid #E5E5EA;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1D1D1F;
+  transition: all 0.15s;
+}
+.driversStatusChipActive { background: #4A8FF9; color: #fff; border-color: #4A8FF9; }
+
+/* Address blocks */
+.driversAddressSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.driversAddressSectionLabel { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+.driversAddAddressBtn {
+  border: 1.5px solid #4A8FF9;
+  background: #fff;
+  color: #4A8FF9;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+.driversAddressBlock { background: #F5F7FA; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.driversAddressBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.driversAddressBlockLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4A8FF9;
+}
+.driversAddressRemoveBtn {
+  border: none;
+  background: transparent;
+  color: #86868B;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0;
+}
+.driversAddressBlockFields { display: flex; flex-direction: column; gap: 8px; }
+.driversAddressCityRow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Form groups — visually separate Personal vs License sections inside the modal */
+.driversFormGroup {
+  border: 1.5px solid rgba(74, 143, 249, 0.2);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(74, 143, 249, 0.02);
+}
+.driversFormGroupLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4A8FF9;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 2px;
+}
+
+/* Add driver modal — fixed width distinct from shared modal overlay */
+.driversAddModal {
+  width: 540px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.20);
+}
+
+/* Driver summary modal */
+.driversSummaryModal {
+  width: 560px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.20);
+}
+
+.driversSummaryHero {
+  background: linear-gradient(135deg, #4F8CFF 0%, #3A7BF0 100%);
+  border-radius: 20px 20px 0 0;
+  padding: 28px 24px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.driversSummaryAvatarLarge {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.driversSummaryHeroInfo { flex: 1; min-width: 0; }
+.driversSummaryName { font-size: 20px; font-weight: 800; color: #fff; line-height: 1.2; }
+.driversSummaryLicense {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 4px;
+}
+.driversSummaryCloseBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 16px;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+.driversSummaryBody { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+.driversSummarySection { display: flex; flex-direction: column; gap: 10px; }
+.driversSummarySectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #86868B;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.driversSummaryGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.driversSummaryItem { display: flex; flex-direction: column; gap: 2px; }
+.driversSummaryItemLabel { font-size: 11px; color: #86868B; font-weight: 600; }
+.driversSummaryItemValue { font-size: 14px; font-weight: 700; color: #1D1D1F; }
+.driversSummaryDivider { height: 1px; background: #F2F2F7; }
+
+.driversSummaryAddresses { display: flex; flex-direction: column; gap: 8px; }
+.driversSummaryAddress { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; color: #1D1D1F; }
+.driversSummaryAddressPin { color: #4A8FF9; margin-top: 1px; flex-shrink: 0; }
+.driversSummaryNoAddress { font-size: 13px; color: #86868B; }
+
+.driversSummaryFooter { padding: 0 24px 24px; display: flex; justify-content: flex-end; }
