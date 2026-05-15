@@ -6,33 +6,6 @@ import ConfirmModal from "../components/ConfirmModal";
 import { fullName, initials, computeAge, formatDate, parseAddresses } from "../utils";
 import "./Drivers.css";
 
-const demoDrivers = [
-  {
-    license_number: "N01-12-345678",
-    first_name: "Juan", middle_name: "Santos", last_name: "dela Cruz",
-    sex: "M", date_of_birth: "1989-04-15",
-    license_type: "Professional", license_status: "valid",
-    license_expiration_date: "2027-04-15", license_issuance_date: "2021-04-15",
-    addresses: "123 Rizal Ave, Makati City, NCR",
-  },
-  {
-    license_number: "N02-13-456789",
-    first_name: "Maria", middle_name: "Cruz", last_name: "Santos",
-    sex: "F", date_of_birth: "1984-08-22",
-    license_type: "Non-Professional", license_status: "valid",
-    license_expiration_date: "2026-08-22", license_issuance_date: "2020-08-22",
-    addresses: null,
-  },
-  {
-    license_number: "N03-14-567890",
-    first_name: "Pedro", middle_name: "Lopez", last_name: "Garcia",
-    sex: "M", date_of_birth: "1994-11-03",
-    license_type: "Student Permit", license_status: "expired",
-    license_expiration_date: "2023-11-03", license_issuance_date: "2022-11-03",
-    addresses: null,
-  },
-];
-
 const LICENSE_STATUSES = ["valid", "expired", "suspended", "revoked"];
 
 /* ── Small reusable components ── */

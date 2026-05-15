@@ -1,7 +1,7 @@
 -- schema.sql
-DROP DATABASE IF EXISTS lto_db;
-CREATE DATABASE lto_db;
-USE lto_db;
+DROP DATABASE IF EXISTS lto_ims;
+CREATE DATABASE lto_ims;
+USE lto_ims;
 
 -- Setup part, script for recreating your schema and your diagrams
 -- DRIVER

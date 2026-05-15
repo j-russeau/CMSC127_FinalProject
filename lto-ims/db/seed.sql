@@ -1,5 +1,5 @@
 -- db/seed.sql
-USE lto_db;
+USE lto_ims;
 
 SET FOREIGN_KEY_CHECKS = 0;
 

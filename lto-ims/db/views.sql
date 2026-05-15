@@ -1,5 +1,5 @@
 -- db/views.sql
-USE lto_db;
+USE lto_ims;
 
 DROP VIEW IF EXISTS latest_registration_vu;
 
