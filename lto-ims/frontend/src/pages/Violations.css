@@ -647,3 +647,148 @@
   font-weight: 900;
   color: #FF3B30;
 }
+
+/* Details modal */
+.detailOverlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  display: grid;
+  place-items: center;
+  z-index: 60;
+}
+
+.detailModal{
+  width: 860px;
+  max-width: 94vw;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.22);
+  padding: 18px;
+}
+
+.detailHeader{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detailHeaderTitle{
+  font-size: 16px;
+  font-weight: 800;
+  color: #1D1D1F;
+}
+
+.detailId{
+  color: #4A8FF9;
+}
+
+.detailClose{
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  color: #86868B;
+}
+
+.detailDivider{
+  height: 1px;
+  background: rgba(0,0,0,0.08);
+  margin: 12px 0;
+}
+
+.detailGrid{
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.detailBlock{
+  border: 1px solid rgba(0,0,0,0.06);
+  background: rgba(245,247,250,0.55);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.detailBlockTitle{
+  font-size: 12px;
+  color: #86868B;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.detailStrong{
+  font-weight: 800;
+  color: #1D1D1F;
+}
+
+.detailMuted{
+  margin-top: 2px;
+  font-size: 12px;
+  color: #86868B;
+}
+
+.detailFine{
+  font-weight: 900;
+  color: #FF3B30;
+  font-size: 16px;
+}
+
+.detailSectionTitle{
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1D1D1F;
+}
+
+.detailNote{
+  margin-top: 8px;
+  font-size: 13px;
+  color: #86868B;
+}
+
+/* Violations table inside modal */
+.violTable{
+  margin-top: 10px;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.violHead{
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(245,247,250,0.9);
+  color: #86868B;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.violRow{
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.violName{
+  font-weight: 700;
+  color: #1D1D1F;
+}
+
+.violFine{
+  font-weight: 900;
+  color: #FF3B30;
+  text-align: right;
+}
+
+.detailFooter{
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

@@ -117,6 +117,8 @@ export default function Violations() {
   const [msg, setMsg] = useState("");
   const [msgErr, setMsgErr] = useState("");
 
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
   // Modal state
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -471,6 +473,7 @@ export default function Violations() {
                     className="linkBtn"
                     onClick={async () => {
                       setSelectedTicketId(t.ticket_id);
+                      setDetailsOpen(true);
                       await loadViolations(t.ticket_id);
                     }}
                   >
@@ -485,56 +488,107 @@ export default function Violations() {
         </div>
 
         {/* Details panel */}
-        {selectedTicketId ? (
-          <div className="card">
-            <div className="detailsHeader">
-              <div className="detailsTitle">
-                Ticket Details: <span className="detailsId">{selectedTicketId}</span>
-              </div>
-              <button
-                className="linkBtn muted"
-                onClick={() => {
-                  setSelectedTicketId(null);
-                  setViolations([]);
-                }}
-              >
-                Close
-              </button>
-            </div>
+        {detailsOpen && selectedTicketId ? (
+          <div className="detailOverlay" onClick={() => setDetailsOpen(false)}>
+            <div className="detailModal" onClick={(e) => e.stopPropagation()}>
+              <div className="detailHeader">
+                <div className="detailHeaderTitle">
+                  Ticket Details: <span className="detailId">{selectedTicketId}</span>
+                </div>
 
-            {selectedTicket ? (
-              <div className="detailsMeta">
-                <div>
-                  <span className="metaLabel">Driver:</span> {selectedTicket.driver_license}
+                <button
+                  className="detailClose"
+                  onClick={() => setDetailsOpen(false)}
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="detailDivider" />
+
+              {/* Meta grid */}
+              <div className="detailGrid">
+                <div className="detailBlock">
+                  <div className="detailBlockTitle">Driver</div>
+                  <div className="detailStrong">{selectedTicket?.driver_name || "—"}</div>
+                  <div className="detailMuted">{selectedTicket?.driver_license || "—"}</div>
                 </div>
-                <div>
-                  <span className="metaLabel">Vehicle:</span> {selectedTicket.plate_number}
+
+                <div className="detailBlock">
+                  <div className="detailBlockTitle">Vehicle</div>
+                  <div className="detailStrong">{selectedTicket?.plate_number || "—"}</div>
+                  <div className="detailMuted">{selectedTicket?.vehicle_label || "—"}</div>
                 </div>
-                <div>
-                  <span className="metaLabel">Location:</span> {selectedTicket.issued_at}
+
+                <div className="detailBlock">
+                  <div className="detailBlockTitle">Date & Time</div>
+                  {(() => {
+                    const { date, time } = formatDateTime(selectedTicket?.datetime);
+                    return (
+                      <>
+                        <div className="detailStrong">{date}</div>
+                        <div className="detailMuted">{time}</div>
+                      </>
+                    );
+                  })()}
                 </div>
-                <div>
-                  <span className="metaLabel">Status:</span> {selectedTicket.violation_status}
+
+                <div className="detailBlock">
+                  <div className="detailBlockTitle">Location</div>
+                  <div className="detailStrong">{selectedTicket?.issued_at || "—"}</div>
+                  <div className="detailMuted">
+                    Officer: {selectedTicket?.apprehending_officer || "—"}
+                  </div>
+                </div>
+
+                <div className="detailBlock">
+                  <div className="detailBlockTitle">Status</div>
+                  <div className="detailStrong">
+                    <StatusPill status={selectedTicket?.violation_status} />
+                  </div>
+                  <div className="detailMuted">&nbsp;</div>
+                </div>
+
+                <div className="detailBlock">
+                  <div className="detailBlockTitle">Total Fine</div>
+                  <div className="detailFine">
+                    {formatMoney(selectedTicket?.total_fine ?? 0)}
+                  </div>
+                  <div className="detailMuted">&nbsp;</div>
                 </div>
               </div>
-            ) : null}
 
-            <div className="detailsBody">
-              <div className="detailsSectionTitle">Violations</div>
+              {/* Violations list */}
+              <div className="detailSectionTitle">Violations</div>
 
               {loadingViolations ? (
-                <div className="softNote">Loading violations...</div>
+                <div className="detailNote">Loading violations...</div>
               ) : violations.length === 0 ? (
-                <div className="softNote">No violations yet.</div>
+                <div className="detailNote">No violations recorded for this ticket.</div>
               ) : (
-                <ul className="violationList">
+                <div className="violTable">
+                  <div className="violHead">
+                    <div>Violation</div>
+                    <div>Fine</div>
+                  </div>
+
                   {violations.map((v) => (
-                    <li key={v.violation_id}>
-                      <b>{v.name}</b> — ₱{Number(v.corresponding_fine_amount).toLocaleString("en-PH")}
-                    </li>
+                    <div className="violRow" key={v.violation_id}>
+                      <div className="violName">{v.name}</div>
+                      <div className="violFine">
+                        ₱{Number(v.corresponding_fine_amount).toLocaleString("en-PH")}
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
+
+              <div className="detailFooter">
+                <button className="secondaryBtn" onClick={() => setDetailsOpen(false)}>
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
