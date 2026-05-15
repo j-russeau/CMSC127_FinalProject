@@ -18,19 +18,21 @@ app.use(express.json());  // parse JSON bodies on all incoming requests
 
 // ── Route Handlers ────────────────────────────────────────────────────────────
 
-const driversRouter    = require("./routes/drivers");
-const vehiclesRouter   = require("./routes/vehicles");
-const ticketsRouter    = require("./routes/tickets");
+const driversRouter = require("./routes/drivers");
+const vehiclesRouter = require("./routes/vehicles");
+const ticketsRouter = require("./routes/tickets");
 const violationsRouter = require("./routes/violations");
 const registrationsRouter = require("./routes/registrations");
-const reportsRouter       = require("./routes/reports");
+const reportsRouter = require("./routes/reports");
+const dashboardRouter = require("./routes/dashboard");
 
-app.use("/api/drivers",    driversRouter);    // CRUD for drivers + addresses
-app.use("/api/vehicles",   vehiclesRouter);   // CRUD for vehicles
-app.use("/api/tickets",    ticketsRouter);    // CRUD for violation tickets
+app.use("/api/drivers", driversRouter);    // CRUD for drivers + addresses
+app.use("/api/vehicles", vehiclesRouter);   // CRUD for vehicles
+app.use("/api/tickets", ticketsRouter);    // CRUD for violation tickets
 app.use("/api/violations", violationsRouter); // CRUD for individual violations
 app.use("/api/registrations", registrationsRouter); // CRUD for new registrations
-app.use("/api/reports",       reportsRouter);
+app.use("/api/reports", reportsRouter);  // CRUD for reports
+app.use("/api/dashboard", dashboardRouter);  // CRUD for dashboard
 
 // ── Utility Endpoints ─────────────────────────────────────────────────────────
 
