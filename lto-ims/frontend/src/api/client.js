@@ -15,10 +15,24 @@ async function handle(res) {
   return json.data;
 }
 
+// Parse the response JSON but keep the full payload.
+// Used by Reports because report routes return both { sql, data }.
+async function handleRaw(res) {
+  const json = await res.json();
+  if (!res.ok || !json.ok) throw new Error(json.error || "Request failed");
+  return json;
+}
+
 // Send a GET request and return the parsed data payload
 export async function apiGet(path) {
   const res = await fetch(`${API_BASE}${path}`);
   return handle(res);
+}
+
+// Send a GET request and return the full parsed payload
+export async function apiGetRaw(path) {
+  const res = await fetch(`${API_BASE}${path}`);
+  return handleRaw(res);
 }
 
 // Send a POST request with a JSON body and return the parsed data payload

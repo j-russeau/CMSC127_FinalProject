@@ -29,6 +29,18 @@ function validateDateRange(start, end, res) {
     res.status(400).json({ ok: false, error: "start and end must be YYYY-MM-DD" });
     return false;
   }
+  if (start > end) {
+    res.status(400).json({ ok: false, error: "start must be before or equal to end" });
+    return false;
+  }
+  return true;
+}
+
+function validateDate(value, name, res) {
+  if (!DATE_RE.test(String(value || ""))) {
+    res.status(400).json({ ok: false, error: `${name} must be YYYY-MM-DD` });
+    return false;
+  }
   return true;
 }
 
@@ -39,8 +51,15 @@ router.get("/drivers", asyncRoute(async (req, res) => {
     return res.status(400).json({ ok: false, error: "missing filters" });
   }
 
-  const [rows] = await db.query(Q.driversFiltered, [type, status, sex, min, max]);
-  res.json({ ok: true, data: rows });
+  const minAge = Number(min);
+  const maxAge = Number(max);
+  if (!Number.isInteger(minAge) || !Number.isInteger(maxAge) || minAge < 0 || maxAge < 0 || minAge > maxAge) {
+    return res.status(400).json({ ok: false, error: "min and max must be valid ages, and min must be <= max" });
+  }
+
+  const params = [type, status, sex, minAge, maxAge];
+  const [rows] = await db.query(Q.driversFiltered, params);
+  res.json({ ok: true, sql: Q.driversFiltered, params, data: rows });
 }));
 
 router.get("/vehicles", asyncRoute(async (req, res) => {
@@ -50,8 +69,9 @@ router.get("/vehicles", asyncRoute(async (req, res) => {
     return res.status(400).json({ ok: false, error: "license required" });
   }
 
-  const [rows] = await db.query(Q.vehiclesByDriver, [license]);
-  res.json({ ok: true, data: rows });
+  const params = [String(license).trim()];
+  const [rows] = await db.query(Q.vehiclesByDriver, params);
+  res.json({ ok: true, sql: Q.vehiclesByDriver, params, data: rows });
 }));
 
 router.get("/expired-registrations", asyncRoute(async (req, res) => {
@@ -60,14 +80,16 @@ router.get("/expired-registrations", asyncRoute(async (req, res) => {
   if (!date) {
     return res.status(400).json({ ok: false, error: "date required" });
   }
+  if (!validateDate(date, "date", res)) return;
 
-  const [rows] = await db.query(Q.expiredRegistrations, [date]);
-  res.json({ ok: true, data: rows });
+  const params = [date];
+  const [rows] = await db.query(Q.expiredRegistrations, params);
+  res.json({ ok: true, sql: Q.expiredRegistrations, params, data: rows });
 }));
 
 router.get("/expired-drivers", asyncRoute(async (req, res) => {
   const [rows] = await db.query(Q.expiredDrivers);
-  res.json({ ok: true, data: rows });
+  res.json({ ok: true, sql: Q.expiredDrivers, params: [], data: rows });
 }));
 
 router.get("/violations", asyncRoute(async (req, res) => {
@@ -78,33 +100,32 @@ router.get("/violations", asyncRoute(async (req, res) => {
   }
   if (!validateDateRange(start, end, res)) return;
 
-  const [rows] = await db.query(Q.violationsByDriver, [
-    license,
+  const params = [
+    String(license).trim(),
     `${start} 00:00:00`,
     `${end} 23:59:59`,
-  ]);
-  res.json({ ok: true, data: rows });
+  ];
+
+  const [rows] = await db.query(Q.violationsByDriver, params);
+  res.json({ ok: true, sql: Q.violationsByDriver, params, data: rows });
 }));
 
 router.get("/violation-count", asyncRoute(async (req, res) => {
-  const { start, end } = req.query;
+  const { year } = req.query;
 
-  if (!start || !end) {
-    return res.status(400).json({ ok: false, error: "start and end required" });
+  if (!year || !/^\d{4}$/.test(String(year))) {
+    return res.status(400).json({ ok: false, error: "year required, format YYYY" });
   }
-  if (!validateDateRange(start, end, res)) return;
 
-  const [rows] = await db.query(Q.violationCount, [
-    `${start} 00:00:00`,
-    `${end} 23:59:59`,
-  ]);
-  res.json({ ok: true, data: rows });
+  const params = [Number(year)];
+  const [rows] = await db.query(Q.violationCount, params);
+  res.json({ ok: true, sql: Q.violationCount, params, data: rows });
 }));
 
 router.get("/vehicles-region", asyncRoute(async (req, res) => {
   const { region } = req.query;
 
-  if (!region) {
+  if (!region || !String(region).trim()) {
     return res.status(400).json({ ok: false, error: "region required" });
   }
 
@@ -114,8 +135,9 @@ router.get("/vehicles-region", asyncRoute(async (req, res) => {
    * dedicated region column. Adding a `region` column to violation_ticket and
    * indexing it would be the fix, but that's a schema migration out of scope here.
    */
-  const [rows] = await db.query(Q.vehiclesByRegion, [`%${region}%`]);
-  res.json({ ok: true, data: rows });
+  const params = [`%${String(region).trim()}%`];
+  const [rows] = await db.query(Q.vehiclesByRegion, params);
+  res.json({ ok: true, sql: Q.vehiclesByRegion, params, data: rows });
 }));
 
 module.exports = router;
