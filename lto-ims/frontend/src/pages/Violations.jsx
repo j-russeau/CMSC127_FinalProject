@@ -739,12 +739,25 @@ export default function Violations() {
                             ))}
                           </select>
                         ) : (
-                          <input
+                          <select
                             className="input"
-                            placeholder="Violation Name"
                             value={v.name}
-                            onChange={(e) => updateViolationRow(idx, { name: e.target.value })}
-                          />
+                            onChange={(e) => {
+                              const name = e.target.value;
+                              const match = catalog.find((x) => x.name === name);
+                              updateViolationRow(idx, {
+                                name,
+                                fine: match ? String(match.corresponding_fine_amount) : "",
+                              });
+                            }}
+                          >
+                            <option value="">Select violation...</option>
+                            {catalog.map((x) => (
+                              <option key={x.name} value={x.name}>
+                                {x.name}
+                              </option>
+                            ))}
+                          </select>
                         )}
 
                         <input
@@ -753,7 +766,7 @@ export default function Violations() {
                           value={v.fine}
                           readOnly={catalog.length > 0}
                           onChange={(e) => {
-                            // Only allow manual editing when catalog is not available
+                            // allow manual entry only if catalog failed to load
                             if (catalog.length === 0) updateViolationRow(idx, { fine: e.target.value });
                           }}
                         />
