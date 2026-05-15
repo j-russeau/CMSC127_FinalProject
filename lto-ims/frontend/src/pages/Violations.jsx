@@ -7,42 +7,6 @@ import { useToast, ToastList } from "../components/Toast";
 import { formatDateTime, formatMoney } from "../utils";
 import "./Violations.css";
 
-const demoTickets = [
-  {
-    ticket_id: "VIO-2024-001",
-    driver_name: "Juan dela Cruz",
-    driver_license: "N01-12-3456789",
-    plate_number: "ABC-1234",
-    vehicle_label: "Toyota Vios 2023",
-    datetime: "2026-04-25 14:30:00",
-    issued_at: "Makati City, NCR",
-    total_fine: 7500,
-    violation_status: "unpaid",
-  },
-  {
-    ticket_id: "VIO-2024-002",
-    driver_name: "Maria Santos",
-    driver_license: "N02-13-4567890",
-    plate_number: "XYZ-5678",
-    vehicle_label: "Honda City 2022",
-    datetime: "2026-04-24 10:15:00",
-    issued_at: "Quezon City, NCR",
-    total_fine: 1500,
-    violation_status: "paid",
-  },
-  {
-    ticket_id: "VIO-2024-003",
-    driver_name: "Pedro Garcia",
-    driver_license: "N03-14-5678901",
-    plate_number: "DEF-9012",
-    vehicle_label: "Yamaha Mio 2024",
-    datetime: "2026-04-23 16:45:00",
-    issued_at: "Manila, NCR",
-    total_fine: 500,
-    violation_status: "contested",
-  },
-];
-
 const SHOW_SQL = (import.meta.env.VITE_SHOW_SQL || "false") === "true";
 
 function toMysqlDateTime(datetimeLocalValue) {
@@ -169,7 +133,7 @@ export default function Violations() {
         }))
       );
     } catch (e) {
-      setTickets(demoTickets);
+      setTickets([]);
       setApiErr(e.message);
     } finally {
       setLoadingTickets(false);
@@ -394,7 +358,10 @@ export default function Violations() {
           <SearchInput value={query} onChange={setQuery} placeholder="Search by ticket ID, driver, plate, or location..." />
           {apiErr && (
             <div className="softNote">
-              Using demo data (API not reachable): <span className="softNoteErr">{apiErr}</span>
+              Cannot load tickets (API not reachable): <span className="softNoteErr">{apiErr}</span>
+              <button className="retryBtn" onClick={refreshTickets} style={{ marginLeft: 10 }}>
+                Retry
+              </button>
             </div>
           )}
         </div>
