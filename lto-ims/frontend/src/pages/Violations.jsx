@@ -58,7 +58,12 @@ function safeIdPart(s) {
 }
 
 function genViolationId(ticketId, idx) {
-  return `V-${safeIdPart(ticketId)}-${idx + 1}`;
+  // Use last 8 digits from ticket (usually date), a 2-digit sequence, and a 4-char random suffix
+  const digits = String(ticketId || "").replace(/\D/g, "").slice(-8) || "00000000";
+  const seq = String(idx + 1).padStart(2, "0");
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase(); // 4 chars
+  // Length: 1 + 8 + 2 + 4 = 15 (fits in VARCHAR(20))
+  return `V${digits}${seq}${rand}`;
 }
 
 /*
