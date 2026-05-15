@@ -46,7 +46,7 @@ router.post("/", async (req, res) => {
   try {
     const v = req.body;
 
-    // Required fields
+    // All four fields are required
     const required = ["violation_id", "name", "corresponding_fine_amount", "ticket_id"];
     for (const f of required) {
       if (v[f] === undefined || v[f] === null || v[f] === "") {
@@ -54,15 +54,15 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // Validate violation type exists in catalog
+    // Validate type exists
     if (!catalog[v.name]) {
       return res.status(400).json({ ok: false, error: "Invalid violation type" });
     }
 
-    // Force fine amount to catalog fine (realistic)
+    // Force fine to catalog (real-world behavior)
     v.corresponding_fine_amount = catalog[v.name];
 
-    // Safety length check
+    // Length safety
     if (String(v.violation_id).length > 20) {
       return res.status(400).json({ ok: false, error: "violation_id too long (max 20)" });
     }

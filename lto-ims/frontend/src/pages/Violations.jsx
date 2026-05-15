@@ -51,14 +51,6 @@ function toMysqlDateTime(datetimeLocalValue) {
   return s.length === 16 ? `${s}:00` : s;
 }
 
-function safeIdPart(s) {
-  return String(s || "")
-    .trim()
-    .replace(/[^A-Za-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-}
-
 function genViolationId(ticketId, idx) {
   // Use last 8 digits from ticket (usually date), a 2-digit sequence, and a 4-char random suffix
   const digits = String(ticketId || "").replace(/\D/g, "").slice(-8) || "00000000";
