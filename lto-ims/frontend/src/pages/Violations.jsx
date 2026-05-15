@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { listTickets, createTicketWithViolations, updateTicketStatus } from "../api/tickets";
-import { listViolations } from "../api/violations";
+import { listViolations, getViolationCatalog } from "../api/violations";
 import { listVehicles } from "../api/vehicles";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
@@ -199,6 +199,19 @@ export default function Violations() {
       // non-critical
     }
   }
+
+  const [catalog, setCatalog] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const items = await getViolationCatalog();
+        setCatalog(items);
+      } catch {
+        // non-critical: fallback to manual entry if catalog fails
+      }
+    })();
+  }, []);
 
   async function loadViolations(ticketId) {
     if (!ticketId) return;
@@ -571,21 +584,21 @@ export default function Violations() {
         ) : null}
 
         {/* SQL preview */}
-        {SHOW_SQL && (
+        {SHOW_SQL && showSql && (
           <div className="card codeCard">
             <div className="codeLabel">SQL used</div>
             <pre className="codePre">{`-- List tickets
-SELECT * FROM violation_ticket ORDER BY datetime DESC;
+        SELECT * FROM violation_ticket ORDER BY datetime DESC;
 
--- Create ticket + violations (atomic)
-INSERT INTO violation_ticket (...) VALUES (...);
-INSERT INTO violation (...) VALUES (...), (...);
+        -- Create ticket + violations (atomic)
+        INSERT INTO violation_ticket (...) VALUES (...);
+        INSERT INTO violation (...) VALUES (...), (...);
 
--- Update status
-UPDATE violation_ticket SET violation_status = ? WHERE ticket_id = ?;
+        -- Update status
+        UPDATE violation_ticket SET violation_status = ? WHERE ticket_id = ?;
 
--- List violations by ticket
-SELECT * FROM violation WHERE ticket_id = ?;`}</pre>
+        -- List violations by ticket
+        SELECT * FROM violation WHERE ticket_id = ?;`}</pre>
           </div>
         )}
 
@@ -713,20 +726,44 @@ SELECT * FROM violation WHERE ticket_id = ?;`}</pre>
                       </div>
 
                       <div className="violationInputs">
+                        {catalog.length > 0 ? (
+                          <select
+                            className="input"
+                            value={v.name}
+                            onChange={(e) => {
+                              const name = e.target.value;
+                              const match = catalog.find((x) => x.name === name);
+                              updateViolationRow(idx, {
+                                name,
+                                fine: match ? String(match.corresponding_fine_amount) : "",
+                              });
+                            }}
+                          >
+                            <option value="">Select violation...</option>
+                            {catalog.map((x) => (
+                              <option key={x.name} value={x.name}>
+                                {x.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            className="input"
+                            placeholder="Violation Name"
+                            value={v.name}
+                            onChange={(e) => updateViolationRow(idx, { name: e.target.value })}
+                          />
+                        )}
+
                         <input
                           className="input"
-                          placeholder="Violation Name (e.g. Reckless Driving)"
-                          value={v.name}
-                          onChange={(e) => updateViolationRow(idx, { name: e.target.value })}
-                        />
-                        <input
-                          className="input"
-                          type="number"
-                          min="0"
-                          step="0.01"
                           placeholder="Fine Amount"
                           value={v.fine}
-                          onChange={(e) => updateViolationRow(idx, { fine: e.target.value })}
+                          readOnly={catalog.length > 0}
+                          onChange={(e) => {
+                            // Only allow manual editing when catalog is not available
+                            if (catalog.length === 0) updateViolationRow(idx, { fine: e.target.value });
+                          }}
                         />
                       </div>
                     </div>
