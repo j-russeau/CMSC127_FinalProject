@@ -138,6 +138,7 @@ INSERT INTO violation_ticket VALUES
 INSERT INTO violation VALUES
 ('V-001','Overspeeding',1500.00,'TKT-001'),
 ('V-002','Reckless Driving',2000.00,'TKT-001'),
+('V-020','No Seatbelt',1000.00,'TKT-001'),
 
 ('V-003','Overspeeding',1500.00,'TKT-002'),
 
@@ -153,6 +154,7 @@ INSERT INTO violation VALUES
 
 ('V-010','Smoke Belching',2000.00,'TKT-007'),
 ('V-011','Defective Lights',500.00,'TKT-007'),
+('V-021','Counterflow',2000.00,'TKT-007'),
 
 ('V-012','Improper Overtaking',1000.00,'TKT-008'),
 
@@ -162,4 +164,5 @@ INSERT INTO violation VALUES
 
 ('V-015','Overspeeding',1500.00,'TKT-011'),
 ('V-016','Using Mobile Phone While Driving',1000.00,'TKT-011'),
-('V-017','Illegal Parking',500.00,'TKT-011');
+('V-017','Illegal Parking',500.00,'TKT-011'),
+('V-022','Failure to Carry OR/CR',1000.00,'TKT-011');

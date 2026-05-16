@@ -18,3 +18,8 @@ export function updateVehicle(plateNumber, payload) {
 export function deleteVehicle(plateNumber) {
   return apiDelete(`/api/vehicles/${encodeURIComponent(plateNumber)}`);
 }
+
+// Async search API wrapper
+export function searchVehicles(q, limit = 10) {
+  return apiGet(`/api/vehicles/search?q=${encodeURIComponent(q)}&limit=${limit}`);
+}

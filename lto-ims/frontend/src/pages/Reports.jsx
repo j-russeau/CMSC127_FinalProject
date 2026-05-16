@@ -5,7 +5,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useEffect, useMemo, useState } from "react";
-import { listDrivers } from "../api/drivers";
 import {
   reportDriversFiltered,
   reportVehiclesByDriver,
@@ -17,7 +16,8 @@ import {
 } from "../api/reports";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
-import SearchInput from "../components/SearchInput";
+import AsyncAutocompleteInput from "../components/AsyncAutocompleteInput";
+import { searchDrivers } from "../api/drivers";
 import {
   FaUser,
   FaCar,
@@ -184,29 +184,6 @@ function ReportTable({ rows }) {
   );
 }
 
-function DriverInput({ label, value, onChange, drivers, inputId }) {
-  return (
-    <div>
-      <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-        {label}
-      </label>
-      <input
-        className="input"
-        list={inputId}
-        placeholder="D06-11-009385"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <datalist id={inputId}>
-        {drivers.map((d) => (
-          <option key={d.license_number} value={d.license_number}>
-            {driverName(d)}
-          </option>
-        ))}
-      </datalist>
-    </div>
-  );
-}
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 
@@ -232,10 +209,6 @@ export default function Reports() {
     r7: { region: "Quezon City" },
   });
 
-  // Driver list is used only for datalist suggestions in driver-license filters
-  const [drivers, setDrivers] = useState([]);
-  const [driverLoadError, setDriverLoadError] = useState("");
-
   // Results are stored per report so switching report cards does not erase output
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(false);
@@ -249,21 +222,6 @@ export default function Reports() {
   );
 
   const activeResult = results[selectedReport];
-
-  // ── Data Loading ───────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    async function loadDrivers() {
-      try {
-        const rows = await listDrivers();
-        setDrivers(rows || []);
-      } catch (e) {
-        setDriverLoadError(e.message);
-      }
-    }
-
-    loadDrivers();
-  }, []);
 
   // ── Form Helpers ───────────────────────────────────────────────────────────
 
@@ -465,13 +423,25 @@ export default function Reports() {
 
     if (selectedReport === "r2") {
       return (
-        <DriverInput
-          label="Driver License Number"
-          value={f.license}
-          onChange={(v) => patchForm("r2", "license", v)}
-          drivers={drivers}
-          inputId="r2-driver-list"
-        />
+        <div>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+            Driver (Search by name or license)
+          </label>
+
+          <AsyncAutocompleteInput
+            value={f.license}
+            onChange={(v) => patchForm("r2", "license", v)}
+            placeholder="Type at least 2 chars (name or license)..."
+            fetchOptions={(q) => searchDrivers(q, 10)}
+            getLabel={(d) => `${driverName(d)} — ${d.license_number}`}
+            getValue={(d) => d.license_number}
+            onPick={(license) => patchForm("r2", "license", license)}
+          />
+
+          <div style={{ marginTop: 6, fontSize: 12, color: "#86868B" }}>
+            Tip: You can type “Juan” or “D06-11-009385”.
+          </div>
+        </div>
       );
     }
 
@@ -502,13 +472,21 @@ export default function Reports() {
     if (selectedReport === "r5") {
       return (
         <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 14 }}>
-          <DriverInput
-            label="Driver License Number"
-            value={f.license}
-            onChange={(v) => patchForm("r5", "license", v)}
-            drivers={drivers}
-            inputId="r5-driver-list"
-          />
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+              Driver (Search by name or license)
+            </label>
+
+            <AsyncAutocompleteInput
+              value={f.license}
+              onChange={(v) => patchForm("r5", "license", v)}
+              placeholder="Type at least 2 chars (name or license)..."
+              fetchOptions={(q) => searchDrivers(q, 10)}
+              getLabel={(d) => `${driverName(d)} — ${d.license_number}`}
+              getValue={(d) => d.license_number}
+              onPick={(license) => patchForm("r5", "license", license)}
+            />
+          </div>
 
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
@@ -625,14 +603,6 @@ export default function Reports() {
           <div className="pageSub">Generate SQL-based LTO reports</div>
         </div>
       </div>
-
-      {driverLoadError && (
-        <div className="card">
-          <div className="softNote softNoteErr">
-            Driver suggestions could not be loaded: {driverLoadError}
-          </div>
-        </div>
-      )}
 
       <div className="card" style={{ padding: 22 }}>
         <div style={{ marginBottom: 16 }}>

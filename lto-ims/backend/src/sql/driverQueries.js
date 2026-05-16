@@ -64,4 +64,20 @@ module.exports = {
   createAddress: `
     INSERT IGNORE INTO driver_has_address (license_number, address) VALUES (?, ?)
   `,
+
+  // Add backend search endpoints
+  search: `
+    SELECT
+      license_number, first_name, middle_name, last_name,
+      license_type, license_status
+    FROM driver
+    WHERE
+      license_number LIKE ?
+      OR first_name LIKE ?
+      OR middle_name LIKE ?
+      OR last_name LIKE ?
+      OR CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?
+    ORDER BY last_name, first_name
+    LIMIT ?
+  `,
 };
