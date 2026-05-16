@@ -5,7 +5,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useEffect, useMemo, useState } from "react";
-import { listDrivers } from "../api/drivers";
 import {
   reportDriversFiltered,
   reportVehiclesByDriver,
@@ -17,8 +16,6 @@ import {
 } from "../api/reports";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
-import SearchInput from "../components/SearchInput";
-import AutocompleteInput from "../components/AutocompleteInput";
 import AsyncAutocompleteInput from "../components/AsyncAutocompleteInput";
 import { searchDrivers } from "../api/drivers";
 import {
@@ -212,10 +209,6 @@ export default function Reports() {
     r7: { region: "Quezon City" },
   });
 
-  // Driver list is used only for datalist suggestions in driver-license filters
-  const [drivers, setDrivers] = useState([]);
-  const [driverLoadError, setDriverLoadError] = useState("");
-
   // Results are stored per report so switching report cards does not erase output
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(false);
@@ -229,21 +222,6 @@ export default function Reports() {
   );
 
   const activeResult = results[selectedReport];
-
-  // ── Data Loading ───────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    async function loadDrivers() {
-      try {
-        const rows = await listDrivers();
-        setDrivers(rows || []);
-      } catch (e) {
-        setDriverLoadError(e.message);
-      }
-    }
-
-    loadDrivers();
-  }, []);
 
   // ── Form Helpers ───────────────────────────────────────────────────────────
 
@@ -625,14 +603,6 @@ export default function Reports() {
           <div className="pageSub">Generate SQL-based LTO reports</div>
         </div>
       </div>
-
-      {driverLoadError && (
-        <div className="card">
-          <div className="softNote softNoteErr">
-            Driver suggestions could not be loaded: {driverLoadError}
-          </div>
-        </div>
-      )}
 
       <div className="card" style={{ padding: 22 }}>
         <div style={{ marginBottom: 16 }}>
