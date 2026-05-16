@@ -38,13 +38,48 @@ const SEXES = ["M", "F"];
  * Each entry controls the report selection card shown at the top of the page.
  */
 const REPORTS = [
-  { id: "r1", icon: FaUser, title: "...", description: "..." },
-  { id: "r2", icon: FaCar, title: "...", description: "..." },
-  { id: "r3", icon: FaCalendarDays, title: "...", description: "..." },
-  { id: "r4", icon: FaTriangleExclamation, title: "...", description: "..." },
-  { id: "r5", icon: FaReceipt, title: "...", description: "..." },
-  { id: "r6", icon: FaChartColumn, title: "...", description: "..." },
-  { id: "r7", icon: FaLocationDot, title: "...", description: "..." },
+  {
+    id: "r1",
+    icon: FaUser,
+    title: "Driver Filter Report",
+    description: "Filter registered drivers by license type, status, age range, and sex.",
+  },
+  {
+    id: "r2",
+    icon: FaCar,
+    title: "Vehicles by Driver",
+    description: "View all vehicles owned by a given driver.",
+  },
+  {
+    id: "r3",
+    icon: FaCalendarDays,
+    title: "Expired Registrations",
+    description: "Find vehicles with expired registrations as of a selected date.",
+  },
+  {
+    id: "r4",
+    icon: FaTriangleExclamation,
+    title: "Invalid Drivers",
+    description: "View drivers with expired or suspended licenses.",
+  },
+  {
+    id: "r5",
+    icon: FaReceipt,
+    title: "Violations by Driver",
+    description: "View violations committed by a driver within a date range.",
+  },
+  {
+    id: "r6",
+    icon: FaChartColumn,
+    title: "Violations per Type",
+    description: "Count violations per violation type for a given year.",
+  },
+  {
+    id: "r7",
+    icon: FaLocationDot,
+    title: "Vehicles in Violations",
+    description: "View vehicles involved in violations within a city or region.",
+  },
 ];
 
 // ── Date / Formatting Helpers ────────────────────────────────────────────────
@@ -258,7 +293,7 @@ export default function Reports() {
       }
 
       if (!Number.isInteger(min) || !Number.isInteger(max) || min < 0 || max < 0 || min > max) {
-        return "Min Age and Max Age must be whole numbers, and Min Age must be ≤ Max Age.";
+        return "Age Range is invalid. Use whole numbers and make sure From ≤ To.";
       }
     }
 
@@ -383,20 +418,25 @@ export default function Reports() {
               Age Range (years)
             </label>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto 1fr", gap: 10, alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "#86868B", fontWeight: 700 }}>From</span>
+
               <input
                 className="input"
                 type="number"
                 min="0"
-                placeholder="Min age (e.g. 18)"
+                placeholder="18"
                 value={f.min}
                 onChange={(e) => patchForm("r1", "min", e.target.value)}
               />
+
+              <span style={{ fontSize: 12, color: "#86868B", fontWeight: 700 }}>to</span>
+
               <input
                 className="input"
                 type="number"
                 min="0"
-                placeholder="Max age (e.g. 60)"
+                placeholder="60"
                 value={f.max}
                 onChange={(e) => patchForm("r1", "max", e.target.value)}
               />
