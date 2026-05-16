@@ -5,6 +5,7 @@ import { useToast, ToastList } from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
 import { fullName, initials, computeAge, formatDate, parseAddresses } from "../utils";
 import "./Drivers.css";
+import SearchInput from "../components/SearchInput";
 
 const LICENSE_STATUSES = ["valid", "expired", "suspended", "revoked"];
 
@@ -18,18 +19,6 @@ function StatusPill({ status }) {
   else if (s === "suspended")  cls += " driversStatusSuspended";
   else if (s === "revoked")    cls += " driversStatusRevoked";
   return <span className={cls}>{s || "—"}</span>;
-}
-
-function SearchInput({ value, onChange, placeholder }) {
-  return (
-    <div className="searchWrap">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="#86868B" strokeWidth="2" />
-        <path d="M16.5 16.5 21 21" stroke="#86868B" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-      <input className="searchInput" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
-    </div>
-  );
 }
 
 function EyeIcon() {

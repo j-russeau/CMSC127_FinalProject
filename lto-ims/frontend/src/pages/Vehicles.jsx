@@ -4,7 +4,10 @@ import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
 import { fullName } from "../utils";
+import { listDrivers } from "../api/drivers";
+import AutocompleteInput from "../components/AutocompleteInput";
 import "./Vehicles.css";
+import SearchInput from "../components/SearchInput";
 
 const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus", "Truck"];
 
@@ -17,18 +20,6 @@ const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus
 function ColorDot({ color }) {
   return (
     <span className="vehiclesColorDot" style={{ background: color.toLowerCase() }} title={color} />
-  );
-}
-
-function SearchInput({ value, onChange, placeholder }) {
-  return (
-    <div className="searchWrap">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="#86868B" strokeWidth="2" />
-        <path d="M16.5 16.5 21 21" stroke="#86868B" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-      <input className="searchInput" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
-    </div>
   );
 }
 
@@ -79,6 +70,8 @@ const emptyForm = {
 export default function Vehicles() {
   const [query, setQuery]         = useState("");
   const [vehicles, setVehicles]   = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [driversErr, setDriversErr] = useState("");
   const [loading, setLoading]     = useState(true);
   const [apiErr, setApiErr]       = useState("");
   const [expandedPlate, setExpandedPlate] = useState(null);
@@ -114,14 +107,26 @@ export default function Vehicles() {
       const rows = await listVehicles();
       setVehicles(rows || []);
     } catch (e) {
-      setVehicles(demoVehicles);
+      setVehicles([]);
       setApiErr(e.message);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    (async () => {
+      try {
+        const rows = await listDrivers();
+        setDrivers(rows || []);
+        setDriversErr("");
+      } catch (e) {
+        setDrivers([]);
+        setDriversErr(e.message);
+      }
+    })();
+  }, []);
 
   /* Client-side search — useMemo avoids re-filtering on unrelated state changes. */
   const filtered = useMemo(() => {
@@ -287,7 +292,8 @@ export default function Vehicles() {
 
       <div className="card">
         <SearchInput value={query} onChange={setQuery} placeholder="Search by plate number, owner, or make/model..." />
-        {apiErr && <div className="softNote">Using demo data (API not reachable): {apiErr}</div>}
+        {apiErr && <div className="softNote">API not reachable: <span className="softNoteErr">{apiErr}</span></div>}
+        {driversErr && <div className="softNote">Driver list not reachable: <span className="softNoteErr">{driversErr}</span></div>}
       </div>
 
       <div className="card tableCard">
@@ -430,8 +436,15 @@ export default function Vehicles() {
 
               <div className="fieldFull">
                 <label>Owner (Driver License Number)</label>
-                <input className="input" placeholder="N01-12-345678"
-                  value={editForm.owner_license_number} onChange={(e) => patchEditForm("owner_license_number", e.target.value)} />
+                <AutocompleteInput
+                  value={editForm.owner_license_number}
+                  onChange={(v) => patchEditForm("owner_license_number", v)}
+                  placeholder="Search owner name or license..."
+                  options={drivers}
+                  getLabel={(d) => `${[d.first_name, d.middle_name, d.last_name].filter(Boolean).join(" ")} — ${d.license_number}`}
+                  getValue={(d) => d.license_number}
+                  onPick={(license) => patchEditForm("owner_license_number", license)}
+                />
               </div>
 
               {editErr && <div className="msgError">{editErr}</div>}
@@ -515,8 +528,15 @@ export default function Vehicles() {
 
               <div className="fieldFull">
                 <label>Owner (Driver License Number)</label>
-                <input className="input" placeholder="N01-12-345678"
-                  value={form.owner_license_number} onChange={(e) => patchForm("owner_license_number", e.target.value)} />
+                <AutocompleteInput
+                  value={form.owner_license_number}
+                  onChange={(v) => patchForm("owner_license_number", v)}
+                  placeholder="Search owner name or license..."
+                  options={drivers}
+                  getLabel={(d) => `${[d.first_name, d.middle_name, d.last_name].filter(Boolean).join(" ")} — ${d.license_number}`}
+                  getValue={(d) => d.license_number}
+                  onPick={(license) => patchForm("owner_license_number", license)}
+                />
               </div>
 
               {addErr && <div className="msgError">{addErr}</div>}

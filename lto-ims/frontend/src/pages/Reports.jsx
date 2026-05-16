@@ -17,6 +17,16 @@ import {
 } from "../api/reports";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
+import SearchInput from "../components/SearchInput";
+import {
+  FaUser,
+  FaCar,
+  FaCalendarDays,
+  FaTriangleExclamation,
+  FaReceipt,
+  FaChartColumn,
+  FaLocationDot,
+} from "react-icons/fa6";
 
 // Filter dropdown values used by Report #1
 const LICENSE_TYPES = ["Professional", "Non-Professional", "Student Permit"];
@@ -30,43 +40,43 @@ const SEXES = ["M", "F"];
 const REPORTS = [
   {
     id: "r1",
-    icon: "👤",
+    icon: FaUser,
     title: "Driver Filter Report",
     description: "Filter registered drivers by license type, status, age range, and sex.",
   },
   {
     id: "r2",
-    icon: "🚗",
+    icon: FaCar,
     title: "Vehicles by Driver",
     description: "View all vehicles owned by a given driver.",
   },
   {
     id: "r3",
-    icon: "📅",
+    icon: FaCalendarDays,
     title: "Expired Registrations",
     description: "Find vehicles with expired registrations as of a selected date.",
   },
   {
     id: "r4",
-    icon: "⚠️",
+    icon: FaTriangleExclamation,
     title: "Invalid Drivers",
     description: "View drivers with expired or suspended licenses.",
   },
   {
     id: "r5",
-    icon: "🧾",
+    icon: FaReceipt,
     title: "Violations by Driver",
     description: "View violations committed by a driver within a date range.",
   },
   {
     id: "r6",
-    icon: "📊",
+    icon: FaChartColumn,
     title: "Violations per Type",
     description: "Count violations per violation type for a given year.",
   },
   {
     id: "r7",
-    icon: "📍",
+    icon: FaLocationDot,
     title: "Vehicles in Violations",
     description: "View vehicles involved in violations within a city or region.",
   },
@@ -283,7 +293,7 @@ export default function Reports() {
       }
 
       if (!Number.isInteger(min) || !Number.isInteger(max) || min < 0 || max < 0 || min > max) {
-        return "Age range must be valid, and min must be less than or equal to max.";
+        return "Age Range is invalid. Use whole numbers and make sure From ≤ To.";
       }
     }
 
@@ -405,23 +415,35 @@ export default function Reports() {
 
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-              Age Range
+              Age Range (years)
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto 1fr", gap: 10, alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "#86868B", fontWeight: 700 }}>From</span>
+
               <input
                 className="input"
                 type="number"
-                placeholder="Min"
+                min="0"
+                placeholder="18"
                 value={f.min}
                 onChange={(e) => patchForm("r1", "min", e.target.value)}
               />
+
+              <span style={{ fontSize: 12, color: "#86868B", fontWeight: 700 }}>to</span>
+
               <input
                 className="input"
                 type="number"
-                placeholder="Max"
+                min="0"
+                placeholder="60"
                 value={f.max}
                 onChange={(e) => patchForm("r1", "max", e.target.value)}
               />
+            </div>
+
+            <div style={{ marginTop: 6, fontSize: 12, color: "#86868B" }}>
+              Age is computed from Date of Birth as of today.
             </div>
           </div>
 
@@ -658,10 +680,13 @@ export default function Reports() {
                       display: "grid",
                       placeItems: "center",
                       background: active ? "#4A8FF9" : "#F5F7FA",
-                      fontSize: 20,
+                      color: active ? "#fff" : "#4A8FF9",
                     }}
                   >
-                    {report.icon}
+                    {(() => {
+                      const Icon = report.icon;
+                      return <Icon size={20} />;
+                    })()}
                   </div>
 
                   <div>

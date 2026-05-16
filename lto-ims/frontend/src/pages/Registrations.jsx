@@ -12,6 +12,8 @@ import {
 } from "../api/registrations";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
+import SearchInput from "../components/SearchInput";
+import AutocompleteInput from "../components/AutocompleteInput";
 
 // Valid values based on the database/project specification
 const REGISTRATION_STATUSES = ["active", "expired", "suspended"];
@@ -94,23 +96,6 @@ function StatusPill({ status }) {
   }
 
   return <span style={style}>{s || "—"}</span>;
-}
-
-function SearchInput({ value, onChange, placeholder }) {
-  return (
-    <div className="searchWrap">
-      <svg className="searchIcon" width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="#86868B" strokeWidth="2" />
-        <path d="M16.5 16.5 21 21" stroke="#86868B" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-      <input
-        className="searchInput"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
-    </div>
-  );
 }
 
 function HistoryButton({ onClick }) {
@@ -658,20 +643,21 @@ export default function Registrations() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
                   <div>
                     <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-                      Vehicle
+                      Vehicle (Search by plate / make-model / owner)
                     </label>
-                    <select
-                      className="input"
+
+                    <AutocompleteInput
                       value={form.plate_number}
-                      onChange={(e) => selectVehicle(e.target.value)}
-                    >
-                      <option value="">Select vehicle</option>
-                      {vehicles.map((v) => (
-                        <option key={v.plate_number} value={v.plate_number}>
-                          {v.plate_number} — {vehicleName(v)} — {driverName(v)}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(text) => {
+                        patchForm("plate_number", text);
+                        if (vehicleMap[text]) selectVehicle(text); // if exact plate typed
+                      }}
+                      placeholder="Type plate (e.g. ABC-1234) or owner name..."
+                      options={vehicles}
+                      getLabel={(v) => `${v.plate_number} — ${vehicleName(v)} — ${driverName(v)}`}
+                      getValue={(v) => v.plate_number}
+                      onPick={(plate) => selectVehicle(plate)}
+                    />
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
