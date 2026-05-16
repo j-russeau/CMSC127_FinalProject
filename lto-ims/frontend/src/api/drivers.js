@@ -32,3 +32,8 @@ export function updateDriver(licenseNumber, payload) {
 export function deleteDriver(licenseNumber) {
   return apiDelete(`/api/drivers/${encodeURIComponent(licenseNumber)}`);
 }
+
+// Async search API wrapper
+export function searchDrivers(q, limit = 10) {
+  return apiGet(`/api/drivers/search?q=${encodeURIComponent(q)}&limit=${limit}`);
+}

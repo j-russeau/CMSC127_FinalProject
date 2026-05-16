@@ -54,4 +54,23 @@ module.exports = {
 
   // Delete vehicle by plate.
   delete: `DELETE FROM vehicle WHERE plate_number = ?`,
+
+  // Add backend search endpoints
+  search: `
+    SELECT
+      v.plate_number, v.engine_number, v.chassis_number,
+      v.make, v.model, v.year, v.vehicle_type, v.color,
+      v.owner_license_number,
+      d.first_name, d.middle_name, d.last_name
+    FROM vehicle v
+    LEFT JOIN driver d ON d.license_number = v.owner_license_number
+    WHERE
+      v.plate_number LIKE ?
+      OR v.make LIKE ?
+      OR v.model LIKE ?
+      OR v.owner_license_number LIKE ?
+      OR CONCAT_WS(' ', d.first_name, d.middle_name, d.last_name) LIKE ?
+    ORDER BY v.plate_number
+    LIMIT ?
+  `,
 };

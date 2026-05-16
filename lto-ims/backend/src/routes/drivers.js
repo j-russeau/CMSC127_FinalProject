@@ -4,14 +4,37 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const express = require("express");
-const router  = express.Router();
-const db      = require("../db");
-const Q       = require("../sql/driverQueries");
+const router = express.Router();
+const db = require("../db");
+const Q = require("../sql/driverQueries");
 
 // ── GET /api/drivers ──────────────────────────────────────────────────────────
 router.get("/", async (req, res) => {
   try {
     const [rows] = await db.query(Q.list);
+    res.json({ ok: true, data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// GET /api/drivers/search?q=...&limit=10
+router.get("/search", async (req, res) => {
+  try {
+    const q = String(req.query.q || "").trim();
+    const limit = Math.min(Number(req.query.limit || 10), 25);
+
+    if (!q) {
+      return res.status(400).json({ ok: false, error: "q is required" });
+    }
+    if (q.length > 50) {
+      return res.status(400).json({ ok: false, error: "q too long" });
+    }
+
+    const like = `%${q}%`;
+    const [rows] = await db.query(Q.search, [like, like, like, like, like, limit]);
+
     res.json({ ok: true, data: rows });
   } catch (err) {
     console.error(err);
