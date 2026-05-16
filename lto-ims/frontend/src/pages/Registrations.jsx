@@ -13,6 +13,7 @@ import {
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
 import SearchInput from "../components/SearchInput";
+import AutocompleteInput from "../components/AutocompleteInput";
 
 // Valid values based on the database/project specification
 const REGISTRATION_STATUSES = ["active", "expired", "suspended"];
@@ -642,20 +643,21 @@ export default function Registrations() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
                   <div>
                     <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-                      Vehicle
+                      Vehicle (Search by plate / make-model / owner)
                     </label>
-                    <select
-                      className="input"
+
+                    <AutocompleteInput
                       value={form.plate_number}
-                      onChange={(e) => selectVehicle(e.target.value)}
-                    >
-                      <option value="">Select vehicle</option>
-                      {vehicles.map((v) => (
-                        <option key={v.plate_number} value={v.plate_number}>
-                          {v.plate_number} — {vehicleName(v)} — {driverName(v)}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(text) => {
+                        patchForm("plate_number", text);
+                        if (vehicleMap[text]) selectVehicle(text); // if exact plate typed
+                      }}
+                      placeholder="Type plate (e.g. ABC-1234) or owner name..."
+                      options={vehicles}
+                      getLabel={(v) => `${v.plate_number} — ${vehicleName(v)} — ${driverName(v)}`}
+                      getValue={(v) => v.plate_number}
+                      onPick={(plate) => selectVehicle(plate)}
+                    />
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
