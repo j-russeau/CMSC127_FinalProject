@@ -5,6 +5,7 @@ import { useToast, ToastList } from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
 import { fullName } from "../utils";
 import "./Vehicles.css";
+import SearchInput from "../components/SearchInput";
 
 const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus", "Truck"];
 
@@ -17,18 +18,6 @@ const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus
 function ColorDot({ color }) {
   return (
     <span className="vehiclesColorDot" style={{ background: color.toLowerCase() }} title={color} />
-  );
-}
-
-function SearchInput({ value, onChange, placeholder }) {
-  return (
-    <div className="searchWrap">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="#86868B" strokeWidth="2" />
-        <path d="M16.5 16.5 21 21" stroke="#86868B" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-      <input className="searchInput" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
-    </div>
   );
 }
 

@@ -17,6 +17,7 @@ import {
 } from "../api/reports";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
+import SearchInput from "../components/SearchInput";
 
 // Filter dropdown values used by Report #1
 const LICENSE_TYPES = ["Professional", "Non-Professional", "Student Permit"];
