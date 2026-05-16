@@ -18,6 +18,15 @@ import {
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
 import SearchInput from "../components/SearchInput";
+import {
+  FaUser,
+  FaCar,
+  FaCalendarDays,
+  FaTriangleExclamation,
+  FaReceipt,
+  FaChartColumn,
+  FaLocationDot,
+} from "react-icons/fa6";
 
 // Filter dropdown values used by Report #1
 const LICENSE_TYPES = ["Professional", "Non-Professional", "Student Permit"];
@@ -29,48 +38,13 @@ const SEXES = ["M", "F"];
  * Each entry controls the report selection card shown at the top of the page.
  */
 const REPORTS = [
-  {
-    id: "r1",
-    icon: "👤",
-    title: "Driver Filter Report",
-    description: "Filter registered drivers by license type, status, age range, and sex.",
-  },
-  {
-    id: "r2",
-    icon: "🚗",
-    title: "Vehicles by Driver",
-    description: "View all vehicles owned by a given driver.",
-  },
-  {
-    id: "r3",
-    icon: "📅",
-    title: "Expired Registrations",
-    description: "Find vehicles with expired registrations as of a selected date.",
-  },
-  {
-    id: "r4",
-    icon: "⚠️",
-    title: "Invalid Drivers",
-    description: "View drivers with expired or suspended licenses.",
-  },
-  {
-    id: "r5",
-    icon: "🧾",
-    title: "Violations by Driver",
-    description: "View violations committed by a driver within a date range.",
-  },
-  {
-    id: "r6",
-    icon: "📊",
-    title: "Violations per Type",
-    description: "Count violations per violation type for a given year.",
-  },
-  {
-    id: "r7",
-    icon: "📍",
-    title: "Vehicles in Violations",
-    description: "View vehicles involved in violations within a city or region.",
-  },
+  { id: "r1", icon: FaUser, title: "...", description: "..." },
+  { id: "r2", icon: FaCar, title: "...", description: "..." },
+  { id: "r3", icon: FaCalendarDays, title: "...", description: "..." },
+  { id: "r4", icon: FaTriangleExclamation, title: "...", description: "..." },
+  { id: "r5", icon: FaReceipt, title: "...", description: "..." },
+  { id: "r6", icon: FaChartColumn, title: "...", description: "..." },
+  { id: "r7", icon: FaLocationDot, title: "...", description: "..." },
 ];
 
 // ── Date / Formatting Helpers ────────────────────────────────────────────────
@@ -284,7 +258,7 @@ export default function Reports() {
       }
 
       if (!Number.isInteger(min) || !Number.isInteger(max) || min < 0 || max < 0 || min > max) {
-        return "Age range must be valid, and min must be less than or equal to max.";
+        return "Min Age and Max Age must be whole numbers, and Min Age must be ≤ Max Age.";
       }
     }
 
@@ -406,23 +380,30 @@ export default function Reports() {
 
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-              Age Range
+              Age Range (years)
             </label>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <input
                 className="input"
                 type="number"
-                placeholder="Min"
+                min="0"
+                placeholder="Min age (e.g. 18)"
                 value={f.min}
                 onChange={(e) => patchForm("r1", "min", e.target.value)}
               />
               <input
                 className="input"
                 type="number"
-                placeholder="Max"
+                min="0"
+                placeholder="Max age (e.g. 60)"
                 value={f.max}
                 onChange={(e) => patchForm("r1", "max", e.target.value)}
               />
+            </div>
+
+            <div style={{ marginTop: 6, fontSize: 12, color: "#86868B" }}>
+              Age is computed from Date of Birth as of today.
             </div>
           </div>
 
@@ -659,10 +640,13 @@ export default function Reports() {
                       display: "grid",
                       placeItems: "center",
                       background: active ? "#4A8FF9" : "#F5F7FA",
-                      fontSize: 20,
+                      color: active ? "#fff" : "#4A8FF9",
                     }}
                   >
-                    {report.icon}
+                    {(() => {
+                      const Icon = report.icon;
+                      return <Icon size={20} />;
+                    })()}
                   </div>
 
                   <div>
