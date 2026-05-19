@@ -80,7 +80,27 @@ CREATE TABLE registration (
   engine_number VARCHAR(30) NOT NULL,
   chassis_number VARCHAR(30) NOT NULL,
 
+  -- Allows only one ACTIVE registration per vehicle.
+  -- Expired/suspended rows produce NULL here, and MySQL allows many NULLs in UNIQUE indexes.
+  active_vehicle_key VARCHAR(100)
+    GENERATED ALWAYS AS (
+      CASE
+        WHEN registration_status = 'active'
+        THEN CONCAT(plate_number, '|', engine_number, '|', chassis_number)
+        ELSE NULL
+      END
+    ) STORED,
+
   CONSTRAINT registration_number_pk PRIMARY KEY(registration_number),
+
+  CONSTRAINT registration_status_chk
+    CHECK (registration_status IN ('active', 'expired', 'suspended')),
+
+  CONSTRAINT registration_dates_chk
+    CHECK (expiration_date > registration_date),
+
+  CONSTRAINT registration_active_vehicle_uk UNIQUE(active_vehicle_key),
+
   CONSTRAINT registration_vehicle_fk
     FOREIGN KEY(plate_number, engine_number, chassis_number)
     REFERENCES vehicle(plate_number, engine_number, chassis_number)
