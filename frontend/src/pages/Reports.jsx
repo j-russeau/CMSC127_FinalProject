@@ -4,7 +4,7 @@
 // generate report output, and show the exact SQL used.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   reportDriversFiltered,
   reportVehiclesByDriver,

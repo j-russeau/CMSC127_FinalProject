@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listTickets, createTicketWithViolations, updateTicketStatus } from "../api/tickets";
 import { listViolations, getViolationCatalog } from "../api/violations";
 import { listVehicles } from "../api/vehicles";

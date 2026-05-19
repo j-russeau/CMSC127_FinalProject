@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listDrivers, createDriver, updateDriver, deleteDriver } from "../api/drivers";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
@@ -207,7 +207,7 @@ export default function Drivers() {
       const rows = await listDrivers();
       setDrivers(rows || []);
     } catch (e) {
-      setDrivers(demoDrivers);
+      setDrivers([]);
       setApiErr(e.message);
     } finally {
       setLoading(false);

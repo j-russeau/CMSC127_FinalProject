@@ -4,7 +4,7 @@
 // add-registration modal, and SQL preview toggle.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listVehicles } from "../api/vehicles";
 import {
   listRegistrationsRaw,

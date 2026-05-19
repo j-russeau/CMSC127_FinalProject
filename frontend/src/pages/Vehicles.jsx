@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { listVehicles, createVehicle, updateVehicle, deleteVehicle } from "../api/vehicles";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
@@ -319,7 +319,7 @@ export default function Vehicles() {
         {filtered.map((v) => {
           const expanded = expandedPlate === v.plate_number;
           return (
-            <React.Fragment key={v.plate_number}>
+            <Fragment key={v.plate_number}>
               <div className="vehiclesTableRow">
                 <div className="vehiclesCellMono">{v.plate_number}</div>
                 <div className="vehiclesOwnerCell">
@@ -368,7 +368,7 @@ export default function Vehicles() {
                   </div>
                 </div>
               )}
-            </React.Fragment>
+            </Fragment>
           );
         })}
 
