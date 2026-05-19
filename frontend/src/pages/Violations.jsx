@@ -33,7 +33,7 @@ function genTicketId() {
   const d = new Date();
   const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `VIO-${date}-${rand}`;
+  return `TKT-${date}-${rand}`;
 }
 
 const STATUS_LABELS = { paid: "Paid", unpaid: "Unpaid", contested: "Contested" };
@@ -572,7 +572,7 @@ export default function Violations() {
                     <label>Ticket ID</label>
                     <input
                       className="input"
-                      placeholder="VIO-20240101-XXXX"
+                      placeholder="TKT-20240101-XXXX"
                       value={ticketForm.ticket_id}
                       onChange={(e) => setTicketForm({ ...ticketForm, ticket_id: e.target.value })}
                     />
