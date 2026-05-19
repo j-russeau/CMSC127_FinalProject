@@ -266,3 +266,20 @@
 
 /* ── Selected table row ── */
 .selectedRow { background: rgba(74, 143, 249, 0.07) !important; }
+
+/* Scrollable table container */
+.tableScroll {
+  max-height: 520px;        /* adjust: 420–650 depending on your preference */
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 18px;
+}
+
+/* Keeps the header visible while scrolling (works if header is inside the scroll container) */
+.stickyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(6px);
+}

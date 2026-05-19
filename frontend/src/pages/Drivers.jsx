@@ -413,7 +413,7 @@ export default function Drivers() {
             {loading ? "Loading..." : `Drivers (${filtered.length})`}
           </div>
         </div>
-        <div className="driversTableHeader">
+        <div className="tableScroll"><div className="driversTableHeader">
           <div>License Number</div>
           <div>Full Name</div>
           <div>Sex</div>
@@ -442,7 +442,8 @@ export default function Drivers() {
               </button>
             </div>
           </div>
-        ))}
+        ))}</div>
+        
         {!loading && filtered.length === 0 && (
           <div className="emptyState">No drivers found.</div>
         )}

@@ -302,7 +302,8 @@ export default function Vehicles() {
             {loading ? "Loading..." : `Vehicles (${filtered.length})`}
           </div>
         </div>
-        <div className="vehiclesTableHeader">
+
+        <div className="tableScroll"><div className="vehiclesTableHeader">
           <div>Plate Number</div>
           <div>Owner</div>
           <div>Vehicle Type</div>
@@ -370,7 +371,7 @@ export default function Vehicles() {
               )}
             </Fragment>
           );
-        })}
+        })}</div>
 
         {loading && <div className="emptyState">Loading...</div>}
       </div>

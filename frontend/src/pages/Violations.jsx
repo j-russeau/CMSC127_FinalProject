@@ -360,7 +360,8 @@ export default function Violations() {
             <div className="tableTitle">{loadingTickets ? "Loading tickets..." : `Tickets (${filtered.length})`}</div>
           </div>
 
-          <div className="tableHeader">
+          <div className="tableScroll">
+            <div className="tableHeader">
             <div>Ticket ID</div>
             <div>Driver</div>
             <div>Vehicle</div>
@@ -416,6 +417,8 @@ export default function Violations() {
               </div>
             );
           })}
+          </div>
+          
 
           {!loadingTickets && filtered.length === 0 && <div className="emptyState">No tickets found.</div>}
         </div>
