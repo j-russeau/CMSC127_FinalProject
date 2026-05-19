@@ -138,9 +138,13 @@ function validateDriverFormData(d, options = {}) {
     if (!val || !String(val).trim()) return `${label} is required.`;
   }
 
-  if (requireLicenseNumber && !/^[A-Za-z0-9-]{5,20}$/.test(String(d.license_number).trim())) {
+  if (requireLicenseNumber && !/^[A-Za-z0-9][A-Za-z0-9-]{4,19}$/.test(String(d.license_number).trim())) {
     return "License number must be 5–20 characters (letters, numbers, and hyphens only).";
   }
+
+  if (String(d.first_name).trim().length > 50) return "First name is too long (max 50 characters).";
+  if (String(d.last_name).trim().length > 50)  return "Last name is too long (max 50 characters).";
+  if (d.middle_name && String(d.middle_name).trim().length > 50) return "Middle name is too long (max 50 characters).";
 
   if (!LICENSE_TYPES.includes(d.license_type)) {
     return "Select a valid license type.";
@@ -156,6 +160,10 @@ function validateDriverFormData(d, options = {}) {
 
   if (d.date_of_birth > todayIso()) {
     return "Date of birth cannot be in the future.";
+  }
+
+  if (d.license_issuance_date > todayIso()) {
+    return "Issuance date cannot be in the future.";
   }
 
   if (d.license_issuance_date >= d.license_expiration_date) {
@@ -389,7 +397,7 @@ export default function Drivers() {
 
     try {
       await createDriver({
-        license_number:          form.license_number.trim(),
+        license_number:          form.license_number.trim().toUpperCase(),
         license_type:            form.license_type,
         first_name:              form.first_name.trim(),
         middle_name:             form.middle_name.trim() || null,

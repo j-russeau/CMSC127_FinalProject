@@ -64,7 +64,7 @@ router.post("/", async (req, res) => {
       "year", "color", "model", "make", "vehicle_type", "owner_license_number",
     ];
     for (const f of required) {
-      if (!v[f] && v[f] !== 0) {
+      if (v[f] === undefined || v[f] === null || (typeof v[f] === "string" && !v[f].trim())) {
         return res.status(400).json({ ok: false, error: `Missing required field: ${f}` });
       }
     }
@@ -81,6 +81,13 @@ router.post("/", async (req, res) => {
     const plate   = v.plate_number.trim().toUpperCase();
     const engine  = v.engine_number.trim().toUpperCase();
     const chassis = v.chassis_number.trim().toUpperCase();
+
+    if (plate.length > 15)              return res.status(400).json({ ok: false, error: "Plate number must be 15 characters or fewer." });
+    if (engine.length > 30)             return res.status(400).json({ ok: false, error: "Engine number must be 30 characters or fewer." });
+    if (chassis.length > 30)            return res.status(400).json({ ok: false, error: "Chassis number must be 30 characters or fewer." });
+    if (v.make.trim().length > 40)      return res.status(400).json({ ok: false, error: "Make must be 40 characters or fewer." });
+    if (v.model.trim().length > 40)     return res.status(400).json({ ok: false, error: "Model must be 40 characters or fewer." });
+    if (v.color.trim().length > 30)     return res.status(400).json({ ok: false, error: "Color must be 30 characters or fewer." });
 
     await db.query(Q.create, [
       plate,
@@ -125,7 +132,7 @@ router.put("/:plate_number", async (req, res) => {
 
     const required = ["make", "model", "year", "color", "vehicle_type", "owner_license_number"];
     for (const f of required) {
-      if (!v[f] && v[f] !== 0) {
+      if (v[f] === undefined || v[f] === null || (typeof v[f] === "string" && !v[f].trim())) {
         return res.status(400).json({ ok: false, error: `Missing required field: ${f}` });
       }
     }
@@ -138,6 +145,10 @@ router.put("/:plate_number", async (req, res) => {
     if (!VEHICLE_TYPES.includes(v.vehicle_type)) {
       return res.status(400).json({ ok: false, error: `Invalid vehicle type. Must be one of: ${VEHICLE_TYPES.join(", ")}.` });
     }
+
+    if (v.make.trim().length > 40)  return res.status(400).json({ ok: false, error: "Make must be 40 characters or fewer." });
+    if (v.model.trim().length > 40) return res.status(400).json({ ok: false, error: "Model must be 40 characters or fewer." });
+    if (v.color.trim().length > 30) return res.status(400).json({ ok: false, error: "Color must be 30 characters or fewer." });
 
     const [result] = await db.query(Q.update, [
       v.make.trim(),

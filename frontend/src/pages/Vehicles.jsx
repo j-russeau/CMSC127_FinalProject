@@ -173,6 +173,12 @@ export default function Vehicles() {
     if (isNaN(yr) || yr < 1900 || yr > new Date().getFullYear() + 1) {
       setAddErr("Enter a valid year."); return;
     }
+    if (form.plate_number.trim().length > 15)   { setAddErr("Plate number must be 15 characters or fewer."); return; }
+    if (form.engine_number.trim().length > 30)  { setAddErr("Engine number must be 30 characters or fewer."); return; }
+    if (form.chassis_number.trim().length > 30) { setAddErr("Chassis number must be 30 characters or fewer."); return; }
+    if (form.make.trim().length > 40)           { setAddErr("Make must be 40 characters or fewer."); return; }
+    if (form.model.trim().length > 40)          { setAddErr("Model must be 40 characters or fewer."); return; }
+    if (form.color.trim().length > 30)          { setAddErr("Color must be 30 characters or fewer."); return; }
 
     setSubmitting(true);
     try {
@@ -229,6 +235,9 @@ export default function Vehicles() {
     if (!editForm.color.trim())  { setEditErr("Color is required."); return; }
     if (!editForm.vehicle_type)  { setEditErr("Vehicle type is required."); return; }
     if (!editForm.owner_license_number.trim()) { setEditErr("Owner license number is required."); return; }
+    if (editForm.make.trim().length > 40)  { setEditErr("Make must be 40 characters or fewer."); return; }
+    if (editForm.model.trim().length > 40) { setEditErr("Model must be 40 characters or fewer."); return; }
+    if (editForm.color.trim().length > 30) { setEditErr("Color must be 30 characters or fewer."); return; }
 
     setEditSubmitting(true);
     try {
