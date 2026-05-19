@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { listTickets, createTicketWithViolations, updateTicketStatus } from "../api/tickets";
 import { listViolations, getViolationCatalog } from "../api/violations";
-import { listVehicles } from "../api/vehicles";
+import { listVehicles, searchVehicles } from "../api/vehicles";
+import { searchDrivers } from "../api/drivers";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
 import { formatDateTime, formatMoney } from "../utils";
 import "./Violations.css";
 import SearchInput from "../components/SearchInput";
+import AsyncAutocompleteInput from "../components/AsyncAutocompleteInput";
 
 const SHOW_SQL = (import.meta.env.VITE_SHOW_SQL || "false") === "true";
 
@@ -37,6 +39,51 @@ function genTicketId() {
 }
 
 const STATUS_LABELS = { paid: "Paid", unpaid: "Unpaid", contested: "Contested" };
+
+const ALLOWED_STATUS_TRANSITIONS = {
+  unpaid: ["paid", "contested"],
+  contested: ["paid", "unpaid"],
+  paid: [],
+};
+
+function normalizeUpper(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function allowedStatusTransitions(status) {
+  return ALLOWED_STATUS_TRANSITIONS[String(status || "").toLowerCase()] || [];
+}
+
+function driverName(d) {
+  return [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(" ") || "—";
+}
+
+function vehicleName(v) {
+  return `${v.make || ""} ${v.model || ""}`.trim() || "Vehicle";
+}
+
+function normalizeVehicleRow(v) {
+  return {
+    ...v,
+    plate_number: normalizeUpper(v.plate_number),
+    engine_number: normalizeUpper(v.engine_number),
+    chassis_number: normalizeUpper(v.chassis_number),
+    owner_license_number: normalizeUpper(v.owner_license_number),
+  };
+}
+
+function vehicleSearchLabel(v) {
+  return `${normalizeUpper(v.plate_number)} — ${vehicleName(v)} — ${driverName(v)} — ${normalizeUpper(v.owner_license_number)}`;
+}
+
+function isViolationNameAlreadySelected(rows, name, currentIndex) {
+  if (!name) return false;
+
+  return rows.some((row, index) => {
+    if (index === currentIndex) return false;
+    return row.name === name;
+  });
+}
 
 function StatusPill({ status }) {
   const s = (status || "").toLowerCase();
@@ -87,6 +134,7 @@ export default function Violations() {
   const [creating, setCreating] = useState(false);
 
   // Vehicles list used for plate → engine/chassis auto-fill
+  const [vehicles, setVehicles] = useState([]);
   const [vehicleMap, setVehicleMap] = useState({});
 
   const { toasts, toast, dismiss } = useToast();
@@ -135,13 +183,18 @@ export default function Violations() {
   async function loadVehicleMap() {
     try {
       const rows = await listVehicles();
+      const normalizedRows = (rows || []).map(normalizeVehicleRow);
+
       const map = {};
-      (rows || []).forEach((v) => {
+      normalizedRows.forEach((v) => {
         map[v.plate_number] = v;
       });
+
+      setVehicles(normalizedRows);
       setVehicleMap(map);
     } catch {
-      // non-critical
+      setVehicles([]);
+      setVehicleMap({});
     }
   }
 
@@ -179,12 +232,16 @@ export default function Violations() {
 
   // Auto-fill engine/chassis when plate matches known vehicle
   useEffect(() => {
-    const match = vehicleMap[ticketForm.plate_number?.trim()];
+    const plate = normalizeUpper(ticketForm.plate_number);
+    const match = vehicleMap[plate];
+
     if (match) {
       setTicketForm((prev) => ({
         ...prev,
-        engine_number: match.engine_number,
-        chassis_number: match.chassis_number,
+        plate_number: plate,
+        engine_number: normalizeUpper(match.engine_number),
+        chassis_number: normalizeUpper(match.chassis_number),
+        license_number: prev.license_number || normalizeUpper(match.owner_license_number),
       }));
     }
   }, [ticketForm.plate_number, vehicleMap]);
@@ -213,6 +270,15 @@ export default function Violations() {
     setCreateOpen(true);
   }
 
+  function regenerateTicketId() {
+    setModalErr("");
+
+    setTicketForm((prev) => ({
+      ...prev,
+      ticket_id: genTicketId(),
+    }));
+  }
+
   function addViolationRow() {
     setModalViolations((prev) => [...prev, { name: "", fine: "" }]);
   }
@@ -225,23 +291,89 @@ export default function Violations() {
     setModalViolations((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  function selectVehicleForTicket(plate, pickedVehicle = null) {
+    const normalizedPlate = normalizeUpper(plate);
+    const match = pickedVehicle ? normalizeVehicleRow(pickedVehicle) : vehicleMap[normalizedPlate];
+
+    if (match) {
+      setVehicleMap((prev) => ({
+        ...prev,
+        [match.plate_number]: match,
+      }));
+
+      setVehicles((prev) => {
+        const exists = prev.some((v) => normalizeUpper(v.plate_number) === match.plate_number);
+        return exists
+          ? prev.map((v) => (normalizeUpper(v.plate_number) === match.plate_number ? match : v))
+          : [...prev, match];
+      });
+    }
+
+    setTicketForm((prev) => ({
+      ...prev,
+      plate_number: normalizedPlate,
+      engine_number: normalizeUpper(match?.engine_number || ""),
+      chassis_number: normalizeUpper(match?.chassis_number || ""),
+      license_number: normalizeUpper(match?.owner_license_number || prev.license_number),
+    }));
+  }
+
   async function submitCreateTicket() {
     setModalErr("");
 
+    const ticketId = normalizeUpper(ticketForm.ticket_id);
+    const licenseNumber = normalizeUpper(ticketForm.license_number);
+    const plateNumber = normalizeUpper(ticketForm.plate_number);
+    const engineNumber = normalizeUpper(ticketForm.engine_number);
+    const chassisNumber = normalizeUpper(ticketForm.chassis_number);
+    const issuedAt = String(ticketForm.issued_at || "").trim();
+    const officer = String(ticketForm.apprehending_officer || "").trim();
+
     const required = [
-      ["Ticket ID", ticketForm.ticket_id],
+      ["Ticket ID", ticketId],
       ["Date & Time", ticketForm.datetime_local],
-      ["Issued at", ticketForm.issued_at],
-      ["License number", ticketForm.license_number],
-      ["Plate number", ticketForm.plate_number],
-      ["Engine number", ticketForm.engine_number],
-      ["Chassis number", ticketForm.chassis_number],
+      ["Issued at", issuedAt],
+      ["Driver / Owner license number", licenseNumber],
+      ["Plate number", plateNumber],
+      ["Engine number", engineNumber],
+      ["Chassis number", chassisNumber],
     ];
+
     for (const [label, value] of required) {
       if (!value || String(value).trim() === "") {
         setModalErr(`${label} is required.`);
         return;
       }
+    }
+
+    if (ticketId.length > 20) {
+      setModalErr("Ticket ID must be 20 characters or fewer.");
+      return;
+    }
+
+    if (issuedAt.length > 100) {
+      setModalErr("Issued At must be 100 characters or fewer.");
+      return;
+    }
+
+    if (officer.length > 80) {
+      setModalErr("Apprehending Officer must be 80 characters or fewer.");
+      return;
+    }
+
+    const matchedVehicle = vehicleMap[plateNumber];
+
+    if (!matchedVehicle) {
+      setModalErr("Vehicle not found. Select a vehicle from the plate number suggestions.");
+      return;
+    }
+
+    if (
+      normalizeUpper(matchedVehicle.engine_number) !== engineNumber ||
+      normalizeUpper(matchedVehicle.chassis_number) !== chassisNumber
+    ) {
+      setModalErr("Vehicle identity mismatch. Plate, engine, and chassis must belong to the same vehicle.");
+      return;
     }
 
     const cleaned = modalViolations
@@ -253,32 +385,45 @@ export default function Violations() {
       return;
     }
 
+    const seenViolationNames = new Set();
+
     for (let i = 0; i < cleaned.length; i++) {
       const v = cleaned[i];
+
       if (!v.name) {
         setModalErr(`Violation ${i + 1}: name is required.`);
         return;
       }
-      const fine = Number(v.fine);
-      if (!Number.isFinite(fine) || fine < 0) {
-        setModalErr(`Violation ${i + 1}: fine must be ≥ 0.`);
+
+      const catalogMatch = catalog.find((x) => x.name === v.name);
+
+      if (!catalogMatch) {
+        setModalErr(`Violation ${i + 1}: select a valid catalog violation.`);
         return;
       }
+
+      if (seenViolationNames.has(v.name)) {
+        setModalErr(`Violation ${i + 1}: duplicate violation type "${v.name}" is not allowed in one ticket.`);
+        return;
+      }
+
+      seenViolationNames.add(v.name);
     }
 
     const ticketPayload = {
-      ticket_id: ticketForm.ticket_id.trim(),
+      ticket_id: ticketId,
       datetime: toMysqlDateTime(ticketForm.datetime_local),
       violation_status: ticketForm.violation_status,
-      issued_at: ticketForm.issued_at.trim(),
-      apprehending_officer: ticketForm.apprehending_officer.trim() || null,
-      license_number: ticketForm.license_number.trim(),
-      plate_number: ticketForm.plate_number.trim(),
-      engine_number: ticketForm.engine_number.trim(),
-      chassis_number: ticketForm.chassis_number.trim(),
+      issued_at: issuedAt,
+      apprehending_officer: officer || null,
+      license_number: licenseNumber,
+      plate_number: plateNumber,
+      engine_number: engineNumber,
+      chassis_number: chassisNumber,
     };
 
     setCreating(true);
+
     try {
       await createTicketWithViolations({
         ticket: ticketPayload,
@@ -293,12 +438,20 @@ export default function Violations() {
       toast("Ticket created successfully.");
       await refreshTickets();
 
-      // Open details modal for the newly created ticket
       setSelectedTicketId(ticketPayload.ticket_id);
       setDetailsOpen(true);
       await loadViolations(ticketPayload.ticket_id);
     } catch (e) {
-      setModalErr(e.message);
+      const message = e.message || "Request failed";
+
+      if (message.toLowerCase().includes("ticket_id already exists")) {
+        setModalErr(
+          "Ticket ID already exists. Click Regenerate Ticket ID, then create the ticket again."
+        );
+        return;
+      }
+
+      setModalErr(message);
     } finally {
       setCreating(false);
     }
@@ -425,7 +578,7 @@ export default function Violations() {
 
         {/* Details Modal */}
         {detailsOpen && selectedTicketId ? (
-          <div className="detailOverlay" onClick={() => setDetailsOpen(false)}>
+          <div className="modalOverlay">
             <div className="detailModal" onClick={(e) => e.stopPropagation()}>
               <div className="detailHeader">
                 <div className="detailHeaderTitle">
@@ -489,17 +642,15 @@ export default function Violations() {
               {/* Status change buttons */}
               {selectedTicket ? (
                 <div className="statusUpdateRow">
-                  {["paid", "unpaid", "contested"]
-                    .filter((s) => s !== selectedTicket.violation_status)
-                    .map((s) => (
-                      <button
-                        key={s}
-                        className={`statusUpdateBtn statusUpdateBtn--${s}`}
-                        onClick={() => handleUpdateStatus(s)}
-                      >
-                        Mark as {s}
-                      </button>
-                    ))}
+                  {allowedStatusTransitions(selectedTicket.violation_status).map((s) => (
+                  <button
+                    key={s}
+                    className={`statusUpdateBtn statusUpdateBtn--${s}`}
+                    onClick={() => handleUpdateStatus(s)}
+                  >
+                    Mark as {s}
+                  </button>
+                ))}
                 </div>
               ) : null}
 
@@ -555,7 +706,7 @@ export default function Violations() {
 
         {/* Create Ticket Modal */}
         {createOpen && (
-          <div className="modalOverlay" onClick={() => setCreateOpen(false)}>
+          <div className="modalOverlay">
             <div className="modal wide" onClick={(e) => e.stopPropagation()}>
               <div className="modalHeader">
                 <div className="modalTitle">Create Violation Ticket</div>
@@ -573,12 +724,31 @@ export default function Violations() {
                 <div className="formGrid2">
                   <div className="field">
                     <label>Ticket ID</label>
-                    <input
-                      className="input"
-                      placeholder="TKT-20240101-XXXX"
-                      value={ticketForm.ticket_id}
-                      onChange={(e) => setTicketForm({ ...ticketForm, ticket_id: e.target.value })}
-                    />
+
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <input
+                        className="input"
+                        placeholder="TKT-20240101-XXXX"
+                        value={ticketForm.ticket_id}
+                        onChange={(e) =>
+                          setTicketForm((prev) => ({
+                            ...prev,
+                            ticket_id: normalizeUpper(e.target.value),
+                          }))
+                        }
+                      />
+
+                      <button
+                        type="button"
+                        className="secondaryBtn"
+                        onClick={regenerateTicketId}
+                        disabled={creating}
+                        title="Generate a new ticket ID"
+                        style={{ whiteSpace: "nowrap" }}
+                      >
+                        Regenerate
+                      </button>
+                    </div>
                   </div>
 
                   <div className="field">
@@ -612,22 +782,46 @@ export default function Violations() {
                   </div>
 
                   <div className="field">
-                    <label>Driver License Number</label>
-                    <input
-                      className="input"
-                      placeholder="N01-12-345678"
+                    <label>Driver / Owner License Number</label>
+                    <AsyncAutocompleteInput
                       value={ticketForm.license_number}
-                      onChange={(e) => setTicketForm({ ...ticketForm, license_number: e.target.value })}
+                      onChange={(value) =>
+                        setTicketForm((prev) => ({
+                          ...prev,
+                          license_number: normalizeUpper(value),
+                        }))
+                      }
+                      placeholder="Search driver name or license..."
+                      fetchOptions={(q) => searchDrivers(q, 10)}
+                      getLabel={(d) => `${driverName(d)} — ${d.license_number}`}
+                      getValue={(d) => d.license_number}
+                      onPick={(license) =>
+                        setTicketForm((prev) => ({
+                          ...prev,
+                          license_number: normalizeUpper(license),
+                        }))
+                      }
                     />
                   </div>
 
                   <div className="field">
                     <label>Plate Number</label>
-                    <input
-                      className="input"
-                      placeholder="ABC-1234"
+                    <AsyncAutocompleteInput
                       value={ticketForm.plate_number}
-                      onChange={(e) => setTicketForm({ ...ticketForm, plate_number: e.target.value })}
+                      onChange={(value) => {
+                        setTicketForm((prev) => ({
+                          ...prev,
+                          plate_number: value,
+                        }));
+                      }}
+                      placeholder="Search plate, vehicle, owner name, or owner license..."
+                      fetchOptions={async (q) => {
+                        const rows = await searchVehicles(q, 10);
+                        return (rows || []).map(normalizeVehicleRow);
+                      }}
+                      getLabel={vehicleSearchLabel}
+                      getValue={(v) => normalizeUpper(v.plate_number)}
+                      onPick={(plate, vehicle) => selectVehicleForTicket(plate, vehicle)}
                     />
                   </div>
 
@@ -637,7 +831,7 @@ export default function Violations() {
                       className="input"
                       placeholder="Auto-filled from plate"
                       value={ticketForm.engine_number}
-                      onChange={(e) => setTicketForm({ ...ticketForm, engine_number: e.target.value })}
+                      readOnly
                     />
                   </div>
 
@@ -647,7 +841,7 @@ export default function Violations() {
                       className="input"
                       placeholder="Auto-filled from plate"
                       value={ticketForm.chassis_number}
-                      onChange={(e) => setTicketForm({ ...ticketForm, chassis_number: e.target.value })}
+                      readOnly
                     />
                   </div>
                 </div>
@@ -692,7 +886,11 @@ export default function Violations() {
                           >
                             <option value="">Select violation...</option>
                             {catalog.map((x) => (
-                              <option key={x.name} value={x.name}>
+                              <option
+                                key={x.name}
+                                value={x.name}
+                                disabled={isViolationNameAlreadySelected(modalViolations, x.name, idx)}
+                              >
                                 {x.name}
                               </option>
                             ))}
@@ -712,7 +910,11 @@ export default function Violations() {
                           >
                             <option value="">Select violation...</option>
                             {catalog.map((x) => (
-                              <option key={x.name} value={x.name}>
+                              <option
+                                key={x.name}
+                                value={x.name}
+                                disabled={isViolationNameAlreadySelected(modalViolations, x.name, idx)}
+                              >
                                 {x.name}
                               </option>
                             ))}

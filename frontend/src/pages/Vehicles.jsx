@@ -10,6 +10,7 @@ import "./Vehicles.css";
 import SearchInput from "../components/SearchInput";
 
 const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus", "Truck"];
+const MAX_YEAR = new Date().getFullYear() + 1;
 
 /* ── Small reusable components ── */
 
@@ -155,44 +156,110 @@ export default function Vehicles() {
   async function submitAdd() {
     setAddErr("");
 
+    const plate = form.plate_number.trim().toUpperCase();
+    const engine = form.engine_number.trim().toUpperCase();
+    const chassis = form.chassis_number.trim().toUpperCase();
+    const ownerLicense = form.owner_license_number.trim();
+
     const required = [
-      ["Plate number", form.plate_number],
-      ["Engine number", form.engine_number],
-      ["Chassis number", form.chassis_number],
+      ["Plate number", plate],
+      ["Engine number", engine],
+      ["Chassis number", chassis],
       ["Make", form.make],
       ["Model", form.model],
       ["Year", form.year],
       ["Color", form.color],
       ["Vehicle type", form.vehicle_type],
-      ["Owner (Driver License Number)", form.owner_license_number],
+      ["Owner (Driver License Number)", ownerLicense],
     ];
+
     for (const [label, val] of required) {
-      if (!val || !String(val).trim()) { setAddErr(`${label} is required.`); return; }
+      if (!val || !String(val).trim()) {
+        setAddErr(`${label} is required.`);
+        return;
+      }
     }
+
     const yr = parseInt(form.year, 10);
-    if (isNaN(yr) || yr < 1900 || yr > new Date().getFullYear() + 1) {
-      setAddErr("Enter a valid year."); return;
+
+    if (isNaN(yr) || yr < 1900 || yr > MAX_YEAR) {
+      setAddErr(`Year must be between 1900 and ${MAX_YEAR}.`);
+      return;
     }
-    if (form.plate_number.trim().length > 15)   { setAddErr("Plate number must be 15 characters or fewer."); return; }
-    if (form.engine_number.trim().length > 30)  { setAddErr("Engine number must be 30 characters or fewer."); return; }
-    if (form.chassis_number.trim().length > 30) { setAddErr("Chassis number must be 30 characters or fewer."); return; }
-    if (form.make.trim().length > 40)           { setAddErr("Make must be 40 characters or fewer."); return; }
-    if (form.model.trim().length > 40)          { setAddErr("Model must be 40 characters or fewer."); return; }
-    if (form.color.trim().length > 30)          { setAddErr("Color must be 30 characters or fewer."); return; }
+
+    if (!VEHICLE_TYPES.includes(form.vehicle_type)) {
+      setAddErr("Select a valid vehicle type.");
+      return;
+    }
+
+    if (plate.length > 15) {
+      setAddErr("Plate number must be 15 characters or fewer.");
+      return;
+    }
+
+    if (engine.length > 30) {
+      setAddErr("Engine number must be 30 characters or fewer.");
+      return;
+    }
+
+    if (chassis.length > 30) {
+      setAddErr("Chassis number must be 30 characters or fewer.");
+      return;
+    }
+
+    if (form.make.trim().length > 40) {
+      setAddErr("Make must be 40 characters or fewer.");
+      return;
+    }
+
+    if (form.model.trim().length > 40) {
+      setAddErr("Model must be 40 characters or fewer.");
+      return;
+    }
+
+    if (form.color.trim().length > 30) {
+      setAddErr("Color must be 30 characters or fewer.");
+      return;
+    }
+
+    if (vehicles.some((v) => v.plate_number === plate)) {
+      setAddErr("Plate number already exists.");
+      return;
+    }
+
+    if (vehicles.some((v) => String(v.engine_number).toUpperCase() === engine)) {
+      setAddErr("Engine number already exists.");
+      return;
+    }
+
+    if (vehicles.some((v) => String(v.chassis_number).toUpperCase() === chassis)) {
+      setAddErr("Chassis number already exists.");
+      return;
+    }
+
+    if (
+      drivers.length > 0 &&
+      !drivers.some((d) => d.license_number === ownerLicense)
+    ) {
+      setAddErr("Owner license number does not exist.");
+      return;
+    }
 
     setSubmitting(true);
+
     try {
       await createVehicle({
-        plate_number:         form.plate_number.trim().toUpperCase(),
-        engine_number:        form.engine_number.trim().toUpperCase(),
-        chassis_number:       form.chassis_number.trim().toUpperCase(),
-        make:                 form.make.trim(),
-        model:                form.model.trim(),
-        year:                 yr,
-        color:                form.color.trim(),
-        vehicle_type:         form.vehicle_type.trim(),
-        owner_license_number: form.owner_license_number.trim(),
+        plate_number: plate,
+        engine_number: engine,
+        chassis_number: chassis,
+        make: form.make.trim(),
+        model: form.model.trim(),
+        year: yr,
+        color: form.color.trim(),
+        vehicle_type: form.vehicle_type,
+        owner_license_number: ownerLicense,
       });
+
       setAddOpen(false);
       toast("Vehicle added successfully.");
       await refresh();
@@ -228,27 +295,79 @@ export default function Vehicles() {
   async function submitEdit() {
     setEditErr("");
 
+    const ownerLicense = editForm.owner_license_number.trim();
     const yr = parseInt(editForm.year, 10);
-    if (!editForm.make.trim())   { setEditErr("Make is required."); return; }
-    if (!editForm.model.trim())  { setEditErr("Model is required."); return; }
-    if (isNaN(yr) || yr < 1900 || yr > new Date().getFullYear() + 1) { setEditErr("Enter a valid year."); return; }
-    if (!editForm.color.trim())  { setEditErr("Color is required."); return; }
-    if (!editForm.vehicle_type)  { setEditErr("Vehicle type is required."); return; }
-    if (!editForm.owner_license_number.trim()) { setEditErr("Owner license number is required."); return; }
-    if (editForm.make.trim().length > 40)  { setEditErr("Make must be 40 characters or fewer."); return; }
-    if (editForm.model.trim().length > 40) { setEditErr("Model must be 40 characters or fewer."); return; }
-    if (editForm.color.trim().length > 30) { setEditErr("Color must be 30 characters or fewer."); return; }
+
+    if (!editForm.make.trim()) {
+      setEditErr("Make is required.");
+      return;
+    }
+
+    if (!editForm.model.trim()) {
+      setEditErr("Model is required.");
+      return;
+    }
+
+    if (isNaN(yr) || yr < 1900 || yr > MAX_YEAR) {
+      setEditErr(`Year must be between 1900 and ${MAX_YEAR}.`);
+      return;
+    }
+
+    if (!editForm.color.trim()) {
+      setEditErr("Color is required.");
+      return;
+    }
+
+    if (!editForm.vehicle_type) {
+      setEditErr("Vehicle type is required.");
+      return;
+    }
+
+    if (!VEHICLE_TYPES.includes(editForm.vehicle_type)) {
+      setEditErr("Select a valid vehicle type.");
+      return;
+    }
+
+    if (!ownerLicense) {
+      setEditErr("Owner license number is required.");
+      return;
+    }
+
+    if (editForm.make.trim().length > 40) {
+      setEditErr("Make must be 40 characters or fewer.");
+      return;
+    }
+
+    if (editForm.model.trim().length > 40) {
+      setEditErr("Model must be 40 characters or fewer.");
+      return;
+    }
+
+    if (editForm.color.trim().length > 30) {
+      setEditErr("Color must be 30 characters or fewer.");
+      return;
+    }
+
+    if (
+      drivers.length > 0 &&
+      !drivers.some((d) => d.license_number === ownerLicense)
+    ) {
+      setEditErr("Owner license number does not exist.");
+      return;
+    }
 
     setEditSubmitting(true);
+
     try {
       await updateVehicle(editingVehicle.plate_number, {
-        make:                 editForm.make.trim(),
-        model:                editForm.model.trim(),
-        year:                 yr,
-        color:                editForm.color.trim(),
-        vehicle_type:         editForm.vehicle_type,
-        owner_license_number: editForm.owner_license_number.trim(),
+        make: editForm.make.trim(),
+        model: editForm.model.trim(),
+        year: yr,
+        color: editForm.color.trim(),
+        vehicle_type: editForm.vehicle_type,
+        owner_license_number: ownerLicense,
       });
+
       setEditingVehicle(null);
       toast("Vehicle updated successfully.");
       await refresh();
@@ -387,7 +506,7 @@ export default function Vehicles() {
 
       {/* ── Edit Modal ── */}
       {editingVehicle && (
-        <div className="modalOverlay" onClick={() => setEditingVehicle(null)}>
+        <div className="modalOverlay">
           <div className="vehiclesAddModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div className="modalTitle">Edit Vehicle</div>
@@ -472,7 +591,7 @@ export default function Vehicles() {
 
       {/* ── Add Modal ── */}
       {addOpen && (
-        <div className="modalOverlay" onClick={() => setAddOpen(false)}>
+        <div className="modalOverlay">
           <div className="vehiclesAddModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div className="modalTitle">Add New Vehicle</div>

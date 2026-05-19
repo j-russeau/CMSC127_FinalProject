@@ -45,6 +45,10 @@ function vehicleName(v) {
   return `${v.make || ""} ${v.model || ""}`.trim() || "Vehicle";
 }
 
+function normalizeVehicleKey(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
 function compareDatesDesc(a, b) {
   return new Date(b.registration_date).getTime() - new Date(a.registration_date).getTime();
 }
@@ -275,25 +279,31 @@ export default function Registrations() {
    * does not need to manually type the composite vehicle identity.
    */
   function selectVehicle(plate) {
-    const selectedVehicle = vehicleMap[plate];
+    const normalizedPlate = normalizeVehicleKey(plate);
+    const selectedVehicle = vehicleMap[normalizedPlate];
 
     setForm((prev) => ({
       ...prev,
-      plate_number: plate,
-      engine_number: selectedVehicle?.engine_number || "",
-      chassis_number: selectedVehicle?.chassis_number || "",
+      plate_number: normalizedPlate,
+      engine_number: normalizeVehicleKey(selectedVehicle?.engine_number || ""),
+      chassis_number: normalizeVehicleKey(selectedVehicle?.chassis_number || ""),
     }));
   }
 
   function validateForm() {
+    const plateNumber = normalizeVehicleKey(form.plate_number);
+    const engineNumber = normalizeVehicleKey(form.engine_number);
+    const chassisNumber = normalizeVehicleKey(form.chassis_number);
+    const registrationStatus = String(form.registration_status || "").trim().toLowerCase();
+
     const required = [
       ["Registration number", form.registration_number],
-      ["Vehicle", form.plate_number],
-      ["Engine number", form.engine_number],
-      ["Chassis number", form.chassis_number],
+      ["Vehicle", plateNumber],
+      ["Engine number", engineNumber],
+      ["Chassis number", chassisNumber],
       ["Registration date", form.registration_date],
       ["Expiration date", form.expiration_date],
-      ["Registration status", form.registration_status],
+      ["Registration status", registrationStatus],
     ];
 
     for (const [label, value] of required) {
@@ -304,8 +314,34 @@ export default function Registrations() {
       return "Expiration date must be after registration date.";
     }
 
-    if (!REGISTRATION_STATUSES.includes(form.registration_status)) {
+    if (!REGISTRATION_STATUSES.includes(registrationStatus)) {
       return "Registration status must be active, expired, or suspended.";
+    }
+
+    const selectedVehicle = vehicleMap[plateNumber];
+
+    if (!selectedVehicle) {
+      return "Vehicle not found. Choose a vehicle from the search suggestions.";
+    }
+
+    if (
+      normalizeVehicleKey(selectedVehicle.engine_number) !== engineNumber ||
+      normalizeVehicleKey(selectedVehicle.chassis_number) !== chassisNumber
+    ) {
+      return "Vehicle identity mismatch. Plate, engine, and chassis must belong to the same vehicle.";
+    }
+
+    if (
+      registrationStatus === "active" &&
+      registrations.some(
+        (r) =>
+          normalizeVehicleKey(r.plate_number) === plateNumber &&
+          normalizeVehicleKey(r.engine_number) === engineNumber &&
+          normalizeVehicleKey(r.chassis_number) === chassisNumber &&
+          String(r.registration_status || "").toLowerCase() === "active"
+      )
+    ) {
+      return "This vehicle already has an active registration.";
     }
 
     return "";
@@ -322,17 +358,19 @@ export default function Registrations() {
       return;
     }
 
+    const registrationStatus = String(form.registration_status || "").trim().toLowerCase();
+
     setSubmitting(true);
 
     try {
       const response = await createRegistrationRaw({
-        registration_number: form.registration_number.trim(),
+        registration_number: normalizeVehicleKey(form.registration_number),
         registration_date: form.registration_date,
         expiration_date: form.expiration_date,
-        registration_status: form.registration_status,
-        plate_number: form.plate_number.trim(),
-        engine_number: form.engine_number.trim(),
-        chassis_number: form.chassis_number.trim(),
+        registration_status: registrationStatus,
+        plate_number: normalizeVehicleKey(form.plate_number),
+        engine_number: normalizeVehicleKey(form.engine_number),
+        chassis_number: normalizeVehicleKey(form.chassis_number),
       });
 
       setAddOpen(false);
@@ -520,7 +558,7 @@ export default function Registrations() {
 
       {/* ── Add Registration Modal ── */}
       {addOpen && (
-        <div className="modalOverlay" onClick={() => setAddOpen(false)}>
+        <div className="modalOverlay">
           <div className="registrationModal" onClick={(e) => e.stopPropagation()}>
             <div className="registrationModalHeader">
               <div>
@@ -552,8 +590,9 @@ export default function Registrations() {
                     <AutocompleteInput
                       value={form.plate_number}
                       onChange={(text) => {
-                        patchForm("plate_number", text);
-                        if (vehicleMap[text]) selectVehicle(text); // if exact plate typed
+                        const plate = normalizeVehicleKey(text);
+                        patchForm("plate_number", plate);
+                        if (vehicleMap[plate]) selectVehicle(plate);
                       }}
                       placeholder="Type plate (e.g. ABC-1234) or owner name..."
                       options={vehicles}
@@ -669,7 +708,7 @@ export default function Registrations() {
 
       {/* ── Registration History Modal ── */}
       {historyOpen && historyVehicle && (
-        <div className="modalOverlay" onClick={() => setHistoryOpen(false)}>
+        <div className="modalOverlay">
           <div className="registrationHistoryModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div>

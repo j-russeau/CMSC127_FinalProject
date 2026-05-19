@@ -42,7 +42,7 @@ CREATE TABLE vehicle (
   plate_number VARCHAR(15),
   engine_number VARCHAR(30) NOT NULL,
   chassis_number VARCHAR(30) NOT NULL,
-  `year` INT(4) NOT NULL,  -- to not confuse with YEAR()
+  `year` INT NOT NULL,
   color VARCHAR(30) NOT NULL,
   model VARCHAR(40) NOT NULL,
   make VARCHAR(40) NOT NULL,
@@ -56,11 +56,16 @@ CREATE TABLE vehicle (
   -- so other tables can ref (plate, engine, chassis)
   CONSTRAINT vehicle_keys_uk UNIQUE(plate_number, engine_number, chassis_number),
 
+  CONSTRAINT vehicle_year_chk CHECK (`year` BETWEEN 1900 AND 2100),
+  CONSTRAINT vehicle_type_chk CHECK (
+    vehicle_type IN ('Sedan', 'SUV', 'Pickup Truck', 'Van', 'Motorcycle', 'Bus', 'Truck')
+  ),
+
   CONSTRAINT vehicle_owner_fk
-  FOREIGN KEY(owner_license_number)
-  REFERENCES driver(license_number)
-  ON DELETE RESTRICT
-  ON UPDATE RESTRICT
+    FOREIGN KEY(owner_license_number)
+    REFERENCES driver(license_number)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 );
 
 -- REGISTRATION
@@ -75,14 +80,38 @@ CREATE TABLE registration (
   engine_number VARCHAR(30) NOT NULL,
   chassis_number VARCHAR(30) NOT NULL,
 
+  -- Allows only one ACTIVE registration per vehicle.
+  -- Expired/suspended rows produce NULL here, and MySQL allows many NULLs in UNIQUE indexes.
+  active_vehicle_key VARCHAR(100)
+    GENERATED ALWAYS AS (
+      CASE
+        WHEN registration_status = 'active'
+        THEN CONCAT(plate_number, '|', engine_number, '|', chassis_number)
+        ELSE NULL
+      END
+    ) STORED,
+
   CONSTRAINT registration_number_pk PRIMARY KEY(registration_number),
-  CONSTRAINT registration_vehicle_fk FOREIGN KEY(plate_number, engine_number, chassis_number) REFERENCES vehicle(plate_number, engine_number, chassis_number)
+
+  CONSTRAINT registration_status_chk
+    CHECK (registration_status IN ('active', 'expired', 'suspended')),
+
+  CONSTRAINT registration_dates_chk
+    CHECK (expiration_date > registration_date),
+
+  CONSTRAINT registration_active_vehicle_uk UNIQUE(active_vehicle_key),
+
+  CONSTRAINT registration_vehicle_fk
+    FOREIGN KEY(plate_number, engine_number, chassis_number)
+    REFERENCES vehicle(plate_number, engine_number, chassis_number)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 );
 
 -- VIOLATION_TICKET
 CREATE TABLE violation_ticket (
   ticket_id VARCHAR(20),
-  `datetime` DATETIME NOT NULL,  -- to differ from datetime()
+  `datetime` DATETIME NOT NULL,
   violation_status VARCHAR(20) NOT NULL,
   issued_at VARCHAR(100) NOT NULL,
   apprehending_officer VARCHAR(80),
@@ -94,12 +123,21 @@ CREATE TABLE violation_ticket (
   chassis_number VARCHAR(30) NOT NULL,
 
   CONSTRAINT violation_ticket_pk PRIMARY KEY(ticket_id),
+
+  CONSTRAINT vt_status_chk
+    CHECK (violation_status IN ('paid', 'unpaid', 'contested')),
+
   CONSTRAINT vt_driver_fk
-  FOREIGN KEY(license_number)
-  REFERENCES driver(license_number)
-  ON DELETE RESTRICT
-  ON UPDATE RESTRICT,
-  CONSTRAINT vt_vehicle_fk FOREIGN KEY(plate_number, engine_number, chassis_number) REFERENCES vehicle(plate_number, engine_number, chassis_number)
+    FOREIGN KEY(license_number)
+    REFERENCES driver(license_number)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
+
+  CONSTRAINT vt_vehicle_fk
+    FOREIGN KEY(plate_number, engine_number, chassis_number)
+    REFERENCES vehicle(plate_number, engine_number, chassis_number)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 );
 
 -- VIOLATION
@@ -109,8 +147,19 @@ CREATE TABLE violation (
   corresponding_fine_amount DECIMAL(10,2) NOT NULL,
 
   -- f key
-  ticket_id  VARCHAR(20) NOT NULL,
+  ticket_id VARCHAR(20) NOT NULL,
 
   CONSTRAINT violation_pk PRIMARY KEY(violation_id),
-  CONSTRAINT violation_ticket_fk FOREIGN KEY(ticket_id) REFERENCES violation_ticket(ticket_id)
+
+  CONSTRAINT violation_fine_chk
+    CHECK (corresponding_fine_amount >= 0),
+
+  -- Prevents the same violation type from appearing twice in one ticket
+  CONSTRAINT violation_ticket_name_uk UNIQUE(ticket_id, name),
+
+  CONSTRAINT violation_ticket_fk
+    FOREIGN KEY(ticket_id)
+    REFERENCES violation_ticket(ticket_id)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 );

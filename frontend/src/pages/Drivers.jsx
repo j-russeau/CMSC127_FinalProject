@@ -201,7 +201,7 @@ function validateDriverFormData(d, options = {}) {
 function DriverSummaryModal({ driver, onClose }) {
   const addrs = parseAddresses(driver.addresses);
   return (
-    <div className="modalOverlay" onClick={onClose}>
+    <div className="modalOverlay">
       <div className="driversSummaryModal" onClick={(e) => e.stopPropagation()}>
         <div className="driversSummaryHero">
           <div className="driversSummaryAvatarLarge">{initials(driver)}</div>
@@ -574,7 +574,7 @@ export default function Drivers() {
 
       {/* ── Add Modal ── */}
       {addOpen && (
-        <div className="modalOverlay" onClick={() => setAddOpen(false)}>
+        <div className="modalOverlay">
           <div className="driversAddModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div className="modalTitle">Add New Driver</div>
@@ -705,7 +705,7 @@ export default function Drivers() {
 
       {/* ── Edit Modal ── */}
       {editingDriver && (
-        <div className="modalOverlay" onClick={() => setEditingDriver(null)}>
+        <div className="modalOverlay">
           <div className="driversAddModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div className="modalTitle">Edit Driver</div>
