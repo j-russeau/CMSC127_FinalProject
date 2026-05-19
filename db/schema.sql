@@ -154,6 +154,9 @@ CREATE TABLE violation (
   CONSTRAINT violation_fine_chk
     CHECK (corresponding_fine_amount >= 0),
 
+  -- Prevents the same violation type from appearing twice in one ticket
+  CONSTRAINT violation_ticket_name_uk UNIQUE(ticket_id, name),
+
   CONSTRAINT violation_ticket_fk
     FOREIGN KEY(ticket_id)
     REFERENCES violation_ticket(ticket_id)

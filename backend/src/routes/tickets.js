@@ -146,6 +146,7 @@ function validateAndNormalizeViolations(violations) {
   }
 
   const seenIds = new Set();
+  const seenNames = new Set();
   const cleaned = [];
 
   for (let i = 0; i < violations.length; i++) {
@@ -174,6 +175,14 @@ function validateAndNormalizeViolations(violations) {
     if (!hasCatalogViolation(name)) {
       return { error: `Violation ${i + 1}: invalid violation type` };
     }
+
+    if (seenNames.has(name)) {
+      return {
+        error: `Violation ${i + 1}: duplicate violation type "${name}" in the same ticket is not allowed`,
+      };
+    }
+
+    seenNames.add(name);
 
     cleaned.push({
       violation_id,
@@ -305,7 +314,19 @@ router.post("/with-violations", async (req, res) => {
     console.error(err);
 
     if (err.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ ok: false, error: "ticket_id or violation_id already exists" });
+      const msg = err.sqlMessage || err.message || "";
+
+      if (msg.includes("violation_ticket_name_uk")) {
+        return res.status(409).json({
+          ok: false,
+          error: "The same violation type cannot appear twice in one ticket.",
+        });
+      }
+
+      return res.status(409).json({
+        ok: false,
+        error: "ticket_id or violation_id already exists",
+      });
     }
 
     if (err.code === "ER_NO_REFERENCED_ROW_2") {

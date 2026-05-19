@@ -84,6 +84,15 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ ok: false, error: "ticket_id does not exist" });
     }
 
+    const [existingSameTypeRows] = await db.query(Q.existingNameByTicket, [ticketId, name]);
+
+    if (existingSameTypeRows.length > 0) {
+      return res.status(409).json({
+        ok: false,
+        error: "This ticket already has this violation type.",
+      });
+    }
+
     const catalogFine = catalog[name];
 
     await db.query(Q.create, [violationId, name, catalogFine, ticketId]);
@@ -99,6 +108,15 @@ router.post("/", async (req, res) => {
     console.error(err);
 
     if (err.code === "ER_DUP_ENTRY") {
+      const msg = err.sqlMessage || err.message || "";
+
+      if (msg.includes("violation_ticket_name_uk")) {
+        return res.status(409).json({
+          ok: false,
+          error: "This ticket already has this violation type.",
+        });
+      }
+
       return res.status(409).json({ ok: false, error: "violation_id already exists" });
     }
 

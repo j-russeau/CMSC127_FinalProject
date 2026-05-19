@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { listTickets, createTicketWithViolations, updateTicketStatus } from "../api/tickets";
 import { listViolations, getViolationCatalog } from "../api/violations";
-import { listVehicles } from "../api/vehicles";
+import { listVehicles, searchVehicles } from "../api/vehicles";
+import { searchDrivers } from "../api/drivers";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
 import { formatDateTime, formatMoney } from "../utils";
 import "./Violations.css";
 import SearchInput from "../components/SearchInput";
+import AsyncAutocompleteInput from "../components/AsyncAutocompleteInput";
 
 const SHOW_SQL = (import.meta.env.VITE_SHOW_SQL || "false") === "true";
 
@@ -50,6 +52,37 @@ function normalizeUpper(value) {
 
 function allowedStatusTransitions(status) {
   return ALLOWED_STATUS_TRANSITIONS[String(status || "").toLowerCase()] || [];
+}
+
+function driverName(d) {
+  return [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(" ") || "—";
+}
+
+function vehicleName(v) {
+  return `${v.make || ""} ${v.model || ""}`.trim() || "Vehicle";
+}
+
+function normalizeVehicleRow(v) {
+  return {
+    ...v,
+    plate_number: normalizeUpper(v.plate_number),
+    engine_number: normalizeUpper(v.engine_number),
+    chassis_number: normalizeUpper(v.chassis_number),
+    owner_license_number: normalizeUpper(v.owner_license_number),
+  };
+}
+
+function vehicleSearchLabel(v) {
+  return `${normalizeUpper(v.plate_number)} — ${vehicleName(v)} — ${driverName(v)} — ${normalizeUpper(v.owner_license_number)}`;
+}
+
+function isViolationNameAlreadySelected(rows, name, currentIndex) {
+  if (!name) return false;
+
+  return rows.some((row, index) => {
+    if (index === currentIndex) return false;
+    return row.name === name;
+  });
 }
 
 function StatusPill({ status }) {
@@ -101,6 +134,7 @@ export default function Violations() {
   const [creating, setCreating] = useState(false);
 
   // Vehicles list used for plate → engine/chassis auto-fill
+  const [vehicles, setVehicles] = useState([]);
   const [vehicleMap, setVehicleMap] = useState({});
 
   const { toasts, toast, dismiss } = useToast();
@@ -149,20 +183,18 @@ export default function Violations() {
   async function loadVehicleMap() {
     try {
       const rows = await listVehicles();
-      const map = {};
+      const normalizedRows = (rows || []).map(normalizeVehicleRow);
 
-      (rows || []).forEach((v) => {
-        map[normalizeUpper(v.plate_number)] = {
-          ...v,
-          plate_number: normalizeUpper(v.plate_number),
-          engine_number: normalizeUpper(v.engine_number),
-          chassis_number: normalizeUpper(v.chassis_number),
-        };
+      const map = {};
+      normalizedRows.forEach((v) => {
+        map[v.plate_number] = v;
       });
 
+      setVehicles(normalizedRows);
       setVehicleMap(map);
     } catch {
-      // non-critical
+      setVehicles([]);
+      setVehicleMap({});
     }
   }
 
@@ -209,6 +241,7 @@ export default function Violations() {
         plate_number: plate,
         engine_number: normalizeUpper(match.engine_number),
         chassis_number: normalizeUpper(match.chassis_number),
+        license_number: prev.license_number || normalizeUpper(match.owner_license_number),
       }));
     }
   }, [ticketForm.plate_number, vehicleMap]);
@@ -249,6 +282,33 @@ export default function Violations() {
     setModalViolations((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  function selectVehicleForTicket(plate, pickedVehicle = null) {
+    const normalizedPlate = normalizeUpper(plate);
+    const match = pickedVehicle ? normalizeVehicleRow(pickedVehicle) : vehicleMap[normalizedPlate];
+
+    if (match) {
+      setVehicleMap((prev) => ({
+        ...prev,
+        [match.plate_number]: match,
+      }));
+
+      setVehicles((prev) => {
+        const exists = prev.some((v) => normalizeUpper(v.plate_number) === match.plate_number);
+        return exists
+          ? prev.map((v) => (normalizeUpper(v.plate_number) === match.plate_number ? match : v))
+          : [...prev, match];
+      });
+    }
+
+    setTicketForm((prev) => ({
+      ...prev,
+      plate_number: normalizedPlate,
+      engine_number: normalizeUpper(match?.engine_number || ""),
+      chassis_number: normalizeUpper(match?.chassis_number || ""),
+      license_number: normalizeUpper(match?.owner_license_number || prev.license_number),
+    }));
+  }
+
   async function submitCreateTicket() {
     setModalErr("");
 
@@ -264,7 +324,7 @@ export default function Violations() {
       ["Ticket ID", ticketId],
       ["Date & Time", ticketForm.datetime_local],
       ["Issued at", issuedAt],
-      ["License number", licenseNumber],
+      ["Driver / Owner license number", licenseNumber],
       ["Plate number", plateNumber],
       ["Engine number", engineNumber],
       ["Chassis number", chassisNumber],
@@ -294,14 +354,17 @@ export default function Violations() {
 
     const matchedVehicle = vehicleMap[plateNumber];
 
-    if (matchedVehicle) {
-      if (
-        normalizeUpper(matchedVehicle.engine_number) !== engineNumber ||
-        normalizeUpper(matchedVehicle.chassis_number) !== chassisNumber
-      ) {
-        setModalErr("Vehicle identity mismatch. Plate, engine, and chassis must belong to the same vehicle.");
-        return;
-      }
+    if (!matchedVehicle) {
+      setModalErr("Vehicle not found. Select a vehicle from the plate number suggestions.");
+      return;
+    }
+
+    if (
+      normalizeUpper(matchedVehicle.engine_number) !== engineNumber ||
+      normalizeUpper(matchedVehicle.chassis_number) !== chassisNumber
+    ) {
+      setModalErr("Vehicle identity mismatch. Plate, engine, and chassis must belong to the same vehicle.");
+      return;
     }
 
     const cleaned = modalViolations
@@ -312,6 +375,8 @@ export default function Violations() {
       setModalErr("Add at least one violation.");
       return;
     }
+
+    const seenViolationNames = new Set();
 
     for (let i = 0; i < cleaned.length; i++) {
       const v = cleaned[i];
@@ -327,6 +392,13 @@ export default function Violations() {
         setModalErr(`Violation ${i + 1}: select a valid catalog violation.`);
         return;
       }
+
+      if (seenViolationNames.has(v.name)) {
+        setModalErr(`Violation ${i + 1}: duplicate violation type "${v.name}" is not allowed in one ticket.`);
+        return;
+      }
+
+      seenViolationNames.add(v.name);
     }
 
     const ticketPayload = {
@@ -673,22 +745,46 @@ export default function Violations() {
                   </div>
 
                   <div className="field">
-                    <label>Driver License Number</label>
-                    <input
-                      className="input"
-                      placeholder="N01-12-345678"
+                    <label>Driver / Owner License Number</label>
+                    <AsyncAutocompleteInput
                       value={ticketForm.license_number}
-                      onChange={(e) => setTicketForm({ ...ticketForm, license_number: e.target.value })}
+                      onChange={(value) =>
+                        setTicketForm((prev) => ({
+                          ...prev,
+                          license_number: normalizeUpper(value),
+                        }))
+                      }
+                      placeholder="Search driver name or license..."
+                      fetchOptions={(q) => searchDrivers(q, 10)}
+                      getLabel={(d) => `${driverName(d)} — ${d.license_number}`}
+                      getValue={(d) => d.license_number}
+                      onPick={(license) =>
+                        setTicketForm((prev) => ({
+                          ...prev,
+                          license_number: normalizeUpper(license),
+                        }))
+                      }
                     />
                   </div>
 
                   <div className="field">
                     <label>Plate Number</label>
-                    <input
-                      className="input"
-                      placeholder="ABC-1234"
+                    <AsyncAutocompleteInput
                       value={ticketForm.plate_number}
-                      onChange={(e) => setTicketForm({ ...ticketForm, plate_number: e.target.value })}
+                      onChange={(value) => {
+                        setTicketForm((prev) => ({
+                          ...prev,
+                          plate_number: value,
+                        }));
+                      }}
+                      placeholder="Search plate, vehicle, owner name, or owner license..."
+                      fetchOptions={async (q) => {
+                        const rows = await searchVehicles(q, 10);
+                        return (rows || []).map(normalizeVehicleRow);
+                      }}
+                      getLabel={vehicleSearchLabel}
+                      getValue={(v) => normalizeUpper(v.plate_number)}
+                      onPick={(plate, vehicle) => selectVehicleForTicket(plate, vehicle)}
                     />
                   </div>
 
@@ -698,7 +794,7 @@ export default function Violations() {
                       className="input"
                       placeholder="Auto-filled from plate"
                       value={ticketForm.engine_number}
-                      onChange={(e) => setTicketForm({ ...ticketForm, engine_number: e.target.value })}
+                      readOnly
                     />
                   </div>
 
@@ -708,7 +804,7 @@ export default function Violations() {
                       className="input"
                       placeholder="Auto-filled from plate"
                       value={ticketForm.chassis_number}
-                      onChange={(e) => setTicketForm({ ...ticketForm, chassis_number: e.target.value })}
+                      readOnly
                     />
                   </div>
                 </div>
@@ -753,7 +849,11 @@ export default function Violations() {
                           >
                             <option value="">Select violation...</option>
                             {catalog.map((x) => (
-                              <option key={x.name} value={x.name}>
+                              <option
+                                key={x.name}
+                                value={x.name}
+                                disabled={isViolationNameAlreadySelected(modalViolations, x.name, idx)}
+                              >
                                 {x.name}
                               </option>
                             ))}
@@ -773,7 +873,11 @@ export default function Violations() {
                           >
                             <option value="">Select violation...</option>
                             {catalog.map((x) => (
-                              <option key={x.name} value={x.name}>
+                              <option
+                                key={x.name}
+                                value={x.name}
+                                disabled={isViolationNameAlreadySelected(modalViolations, x.name, idx)}
+                              >
                                 {x.name}
                               </option>
                             ))}

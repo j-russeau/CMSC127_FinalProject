@@ -23,6 +23,13 @@ module.exports = {
     WHERE ticket_id = ?
   `,
 
+  existingNameByTicket: `
+    SELECT violation_id
+    FROM violation
+    WHERE ticket_id = ?
+      AND name = ?
+  `,
+
   countByTicket: `
     SELECT COUNT(*) AS total
     FROM violation
