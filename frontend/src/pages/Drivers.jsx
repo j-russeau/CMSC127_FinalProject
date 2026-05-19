@@ -138,6 +138,10 @@ function validateDriverFormData(d, options = {}) {
     if (!val || !String(val).trim()) return `${label} is required.`;
   }
 
+  if (requireLicenseNumber && !/^[A-Za-z0-9-]{5,20}$/.test(String(d.license_number).trim())) {
+    return "License number must be 5–20 characters (letters, numbers, and hyphens only).";
+  }
+
   if (!LICENSE_TYPES.includes(d.license_type)) {
     return "Select a valid license type.";
   }
@@ -154,8 +158,8 @@ function validateDriverFormData(d, options = {}) {
     return "Date of birth cannot be in the future.";
   }
 
-  if (d.license_issuance_date > d.license_expiration_date) {
-    return "Issuance date cannot be after expiration date.";
+  if (d.license_issuance_date >= d.license_expiration_date) {
+    return "Issuance date must be before expiration date.";
   }
 
   const age = ageFromDob(d.date_of_birth);

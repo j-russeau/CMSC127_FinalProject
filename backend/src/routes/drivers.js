@@ -103,6 +103,10 @@ function validateDriverPayload(d, options = {}) {
     }
   }
 
+  if (requireLicenseNumber && !/^[A-Za-z0-9-]{5,20}$/.test(String(d.license_number).trim())) {
+    return "License number must be 5–20 characters (letters, numbers, and hyphens only).";
+  }
+
   if (!LICENSE_TYPES.includes(d.license_type)) {
     return "Invalid license_type. Use Student Permit, Non-Professional, or Professional.";
   }
@@ -128,8 +132,8 @@ function validateDriverPayload(d, options = {}) {
     return "Date of birth cannot be in the future.";
   }
 
-  if (issuance > expiration) {
-    return "License issuance date cannot be after expiration date.";
+  if (issuance >= expiration) {
+    return "License issuance date must be before expiration date.";
   }
 
   const age = ageFromDob(d.date_of_birth);
@@ -253,10 +257,11 @@ router.post("/", async (req, res) => {
     console.error(err);
 
     if (err.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({
-        ok: false,
-        error: "License number or duplicate address already exists.",
-      });
+      const msg = err.sqlMessage || err.message || "";
+      if (msg.includes("driver_has_address_pk")) {
+        return res.status(409).json({ ok: false, error: "Duplicate address already exists for this driver." });
+      }
+      return res.status(409).json({ ok: false, error: "License number already exists." });
     }
 
     res.status(500).json({ ok: false, error: err.message });

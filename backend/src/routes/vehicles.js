@@ -5,6 +5,9 @@ const router  = express.Router();
 const db      = require("../db");
 const Q       = require("../sql/vehicleQueries");
 
+const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus", "Truck"];
+const MAX_YEAR = new Date().getFullYear() + 1;
+
 // ── GET /api/vehicles ─────────────────────────────────────────────────────────
 // The query accepts an optional plate filter via (? IS NULL OR ...).
 // Passing [null, null] returns all vehicles; the single-vehicle GET reuses the
@@ -66,23 +69,43 @@ router.post("/", async (req, res) => {
       }
     }
 
+    const yr = Number(v.year);
+    if (!Number.isInteger(yr) || yr < 1900 || yr > MAX_YEAR) {
+      return res.status(400).json({ ok: false, error: `Year must be between 1900 and ${MAX_YEAR}.` });
+    }
+
+    if (!VEHICLE_TYPES.includes(v.vehicle_type)) {
+      return res.status(400).json({ ok: false, error: `Invalid vehicle type. Must be one of: ${VEHICLE_TYPES.join(", ")}.` });
+    }
+
+    const plate   = v.plate_number.trim().toUpperCase();
+    const engine  = v.engine_number.trim().toUpperCase();
+    const chassis = v.chassis_number.trim().toUpperCase();
+
     await db.query(Q.create, [
-      v.plate_number.trim(),
-      v.engine_number.trim(),
-      v.chassis_number.trim(),
-      Number(v.year),
+      plate,
+      engine,
+      chassis,
+      yr,
       v.color.trim(),
       v.model.trim(),
       v.make.trim(),
-      v.vehicle_type.trim(),
+      v.vehicle_type,
       v.owner_license_number.trim(),
     ]);
 
-    res.status(201).json({ ok: true, data: { plate_number: v.plate_number } });
+    res.status(201).json({ ok: true, data: { plate_number: plate } });
   } catch (err) {
     console.error(err);
     if (err.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ ok: false, error: "Plate number, engine number, or chassis number already exists." });
+      const msg = err.sqlMessage || err.message || "";
+      if (msg.includes("vehicle_engine_uk")) {
+        return res.status(409).json({ ok: false, error: "Engine number already exists." });
+      }
+      if (msg.includes("vehicle_chassis_uk")) {
+        return res.status(409).json({ ok: false, error: "Chassis number already exists." });
+      }
+      return res.status(409).json({ ok: false, error: "Plate number already exists." });
     }
     if (err.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(409).json({ ok: false, error: "Owner license number does not exist." });
@@ -107,12 +130,21 @@ router.put("/:plate_number", async (req, res) => {
       }
     }
 
+    const yr = Number(v.year);
+    if (!Number.isInteger(yr) || yr < 1900 || yr > MAX_YEAR) {
+      return res.status(400).json({ ok: false, error: `Year must be between 1900 and ${MAX_YEAR}.` });
+    }
+
+    if (!VEHICLE_TYPES.includes(v.vehicle_type)) {
+      return res.status(400).json({ ok: false, error: `Invalid vehicle type. Must be one of: ${VEHICLE_TYPES.join(", ")}.` });
+    }
+
     const [result] = await db.query(Q.update, [
       v.make.trim(),
       v.model.trim(),
-      Number(v.year),
+      yr,
       v.color.trim(),
-      v.vehicle_type.trim(),
+      v.vehicle_type,
       v.owner_license_number.trim(),
       plate,
     ]);

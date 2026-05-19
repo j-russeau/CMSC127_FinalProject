@@ -177,9 +177,9 @@ export default function Vehicles() {
     setSubmitting(true);
     try {
       await createVehicle({
-        plate_number:         form.plate_number.trim(),
-        engine_number:        form.engine_number.trim(),
-        chassis_number:       form.chassis_number.trim(),
+        plate_number:         form.plate_number.trim().toUpperCase(),
+        engine_number:        form.engine_number.trim().toUpperCase(),
+        chassis_number:       form.chassis_number.trim().toUpperCase(),
         make:                 form.make.trim(),
         model:                form.model.trim(),
         year:                 yr,
@@ -483,12 +483,12 @@ export default function Vehicles() {
                     value={form.plate_number} onChange={(e) => patchForm("plate_number", e.target.value)} />
                 </div>
                 <div className="fieldFull">
-                  <label>Engine Number (Unique)</label>
+                  <label>Engine Number</label>
                   <input className="input" placeholder="ENG-2024-001"
                     value={form.engine_number} onChange={(e) => patchForm("engine_number", e.target.value)} />
                 </div>
                 <div className="fieldFull">
-                  <label>Chassis Number (Unique)</label>
+                  <label>Chassis Number</label>
                   <input className="input" placeholder="CHS-2024-001"
                     value={form.chassis_number} onChange={(e) => patchForm("chassis_number", e.target.value)} />
                 </div>
