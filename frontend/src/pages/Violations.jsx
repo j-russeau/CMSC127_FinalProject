@@ -270,6 +270,15 @@ export default function Violations() {
     setCreateOpen(true);
   }
 
+  function regenerateTicketId() {
+    setModalErr("");
+
+    setTicketForm((prev) => ({
+      ...prev,
+      ticket_id: genTicketId(),
+    }));
+  }
+
   function addViolationRow() {
     setModalViolations((prev) => [...prev, { name: "", fine: "" }]);
   }
@@ -433,7 +442,16 @@ export default function Violations() {
       setDetailsOpen(true);
       await loadViolations(ticketPayload.ticket_id);
     } catch (e) {
-      setModalErr(e.message);
+      const message = e.message || "Request failed";
+
+      if (message.toLowerCase().includes("ticket_id already exists")) {
+        setModalErr(
+          "Ticket ID already exists. Click Regenerate Ticket ID, then create the ticket again."
+        );
+        return;
+      }
+
+      setModalErr(message);
     } finally {
       setCreating(false);
     }
@@ -706,12 +724,31 @@ export default function Violations() {
                 <div className="formGrid2">
                   <div className="field">
                     <label>Ticket ID</label>
-                    <input
-                      className="input"
-                      placeholder="TKT-20240101-XXXX"
-                      value={ticketForm.ticket_id}
-                      onChange={(e) => setTicketForm({ ...ticketForm, ticket_id: e.target.value })}
-                    />
+
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <input
+                        className="input"
+                        placeholder="TKT-20240101-XXXX"
+                        value={ticketForm.ticket_id}
+                        onChange={(e) =>
+                          setTicketForm((prev) => ({
+                            ...prev,
+                            ticket_id: normalizeUpper(e.target.value),
+                          }))
+                        }
+                      />
+
+                      <button
+                        type="button"
+                        className="secondaryBtn"
+                        onClick={regenerateTicketId}
+                        disabled={creating}
+                        title="Generate a new ticket ID"
+                        style={{ whiteSpace: "nowrap" }}
+                      >
+                        Regenerate
+                      </button>
+                    </div>
                   </div>
 
                   <div className="field">
