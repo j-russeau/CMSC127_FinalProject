@@ -7,6 +7,7 @@ import { fullName, initials, computeAge, formatDate, parseAddresses } from "../u
 import "./Drivers.css";
 import SearchInput from "../components/SearchInput";
 
+const LICENSE_TYPES = ["Student Permit", "Non-Professional", "Professional"];
 const LICENSE_STATUSES = ["valid", "expired", "suspended", "revoked"];
 
 /* ── Small reusable components ── */
@@ -68,6 +69,115 @@ const emptyForm = {
   license_issuance_date: "", license_expiration_date: "",
   addresses: [emptyAddress()],
 };
+
+const MIN_AGE_BY_LICENSE_TYPE = {
+  "Student Permit": 16,
+  "Non-Professional": 17,
+  "Professional": 18,
+};
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function ageFromDob(dob) {
+  if (!dob) return null;
+
+  const birth = new Date(`${dob}T00:00:00`);
+  const today = new Date(`${todayIso()}T00:00:00`);
+
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birth.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+}
+
+function buildAddressStrings(addressRows) {
+  return addressRows
+    .map((a) => [a.street, a.city, a.region].map((s) => s.trim()).filter(Boolean).join(", "))
+    .filter(Boolean);
+}
+
+function validateAddressStrings(addresses) {
+  const lowered = addresses.map((a) => a.toLowerCase());
+
+  if (new Set(lowered).size !== lowered.length) {
+    return "Duplicate address is not allowed for the same driver.";
+  }
+
+  if (addresses.some((a) => a.length > 500)) {
+    return "Address is too long. Maximum length is 500 characters.";
+  }
+
+  return "";
+}
+
+function validateDriverFormData(d, options = {}) {
+  const { requireLicenseNumber = true, addresses = [] } = options;
+
+  const required = [
+    ...(requireLicenseNumber ? [["License number", d.license_number]] : []),
+    ["License type", d.license_type],
+    ["First name", d.first_name],
+    ["Last name", d.last_name],
+    ["Sex", d.sex],
+    ["Date of birth", d.date_of_birth],
+    ["License status", d.license_status],
+    ["Issuance date", d.license_issuance_date],
+    ["Expiration date", d.license_expiration_date],
+  ];
+
+  for (const [label, val] of required) {
+    if (!val || !String(val).trim()) return `${label} is required.`;
+  }
+
+  if (!LICENSE_TYPES.includes(d.license_type)) {
+    return "Select a valid license type.";
+  }
+
+  if (!LICENSE_STATUSES.includes(d.license_status)) {
+    return "Select a valid license status.";
+  }
+
+  if (!["M", "F"].includes(d.sex)) {
+    return "Select a valid sex.";
+  }
+
+  if (d.date_of_birth > todayIso()) {
+    return "Date of birth cannot be in the future.";
+  }
+
+  if (d.license_issuance_date > d.license_expiration_date) {
+    return "Issuance date cannot be after expiration date.";
+  }
+
+  const age = ageFromDob(d.date_of_birth);
+  const minAge = MIN_AGE_BY_LICENSE_TYPE[d.license_type];
+
+  if (age < minAge) {
+    return `${d.license_type} requires the driver to be at least ${minAge} years old.`;
+  }
+
+  if (d.license_status === "expired" && d.license_expiration_date >= todayIso()) {
+    return "Status cannot be expired while expiration date is still today or in the future.";
+  }
+
+  if (d.license_status !== "expired" && d.license_expiration_date < todayIso()) {
+    return "Status must be expired when expiration date is already past.";
+  }
+
+  const addressErr = validateAddressStrings(addresses);
+  if (addressErr) return addressErr;
+
+  return "";
+}
 
 /* ── Driver Summary Modal ── */
 
@@ -259,27 +369,24 @@ export default function Drivers() {
   async function submitAdd() {
     setAddErr("");
 
-    const required = [
-      ["License number", form.license_number],
-      ["First name", form.first_name],
-      ["Last name", form.last_name],
-      ["Date of birth", form.date_of_birth],
-      ["Issuance date", form.license_issuance_date],
-      ["Expiration date", form.license_expiration_date],
-    ];
-    for (const [label, val] of required) {
-      if (!val || !String(val).trim()) { setAddErr(`${label} is required.`); return; }
+    const addresses = buildAddressStrings(form.addresses);
+
+    const err = validateDriverFormData(form, {
+      requireLicenseNumber: true,
+      addresses,
+    });
+
+    if (err) {
+      setAddErr(err);
+      return;
     }
 
-    const addresses = form.addresses
-      .map((a) => [a.street, a.city, a.region].map((s) => s.trim()).filter(Boolean).join(", "))
-      .filter(Boolean);
-
     setSubmitting(true);
+
     try {
       await createDriver({
         license_number:          form.license_number.trim(),
-        license_type:            form.license_type.trim(),
+        license_type:            form.license_type,
         first_name:              form.first_name.trim(),
         middle_name:             form.middle_name.trim() || null,
         last_name:               form.last_name.trim(),
@@ -290,6 +397,7 @@ export default function Drivers() {
         license_expiration_date: form.license_expiration_date,
         addresses,
       });
+
       setAddOpen(false);
       toast("Driver added successfully.");
       await refresh();
@@ -345,21 +453,21 @@ export default function Drivers() {
   async function submitEdit() {
     setEditErr("");
 
-    const required = [
-      ["First name", editForm.first_name],
-      ["Last name", editForm.last_name],
-      ["Date of birth", editForm.date_of_birth],
-      ["Issuance date", editForm.license_issuance_date],
-      ["Expiration date", editForm.license_expiration_date],
-    ];
-    for (const [label, val] of required) {
-      if (!val || !String(val).trim()) { setEditErr(`${label} is required.`); return; }
+    const err = validateDriverFormData(editForm, {
+      requireLicenseNumber: false,
+      addresses: [],
+    });
+
+    if (err) {
+      setEditErr(err);
+      return;
     }
 
     setEditSubmitting(true);
+
     try {
       await updateDriver(editingDriver.license_number, {
-        license_type:             editForm.license_type.trim(),
+        license_type:             editForm.license_type,
         first_name:               editForm.first_name.trim(),
         middle_name:              editForm.middle_name.trim() || null,
         last_name:                editForm.last_name.trim(),
@@ -369,6 +477,7 @@ export default function Drivers() {
         license_issuance_date:    editForm.license_issuance_date,
         license_expiration_date:  editForm.license_expiration_date,
       });
+
       setEditingDriver(null);
       toast("Driver updated successfully.");
       await refresh();
@@ -505,8 +614,18 @@ export default function Drivers() {
                 </div>
                 <div className="fieldFull">
                   <label>License Type</label>
-                  <input className="input" placeholder="e.g. Professional, Non-Professional, Student Permit"
-                    value={form.license_type} onChange={(e) => patchForm("license_type", e.target.value)} />
+                  <select
+                    className="input"
+                    value={form.license_type}
+                    onChange={(e) => patchForm("license_type", e.target.value)}
+                  >
+                    <option value="">Select license type</option>
+                    {LICENSE_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="fieldFull">
                   <label>License Status</label>
@@ -626,8 +745,18 @@ export default function Drivers() {
                 <div className="driversFormGroupLabel">License Information</div>
                 <div className="fieldFull">
                   <label>License Type</label>
-                  <input className="input" placeholder="e.g. Professional, Non-Professional, Student Permit"
-                    value={editForm.license_type} onChange={(e) => patchEditForm("license_type", e.target.value)} />
+                  <select
+                    className="input"
+                    value={editForm.license_type}
+                    onChange={(e) => patchEditForm("license_type", e.target.value)}
+                  >
+                    <option value="">Select license type</option>
+                    {LICENSE_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="fieldFull">
                   <label>License Status</label>
