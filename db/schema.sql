@@ -42,7 +42,7 @@ CREATE TABLE vehicle (
   plate_number VARCHAR(15),
   engine_number VARCHAR(30) NOT NULL,
   chassis_number VARCHAR(30) NOT NULL,
-  `year` INT(4) NOT NULL,  -- to not confuse with YEAR()
+  `year` INT NOT NULL,
   color VARCHAR(30) NOT NULL,
   model VARCHAR(40) NOT NULL,
   make VARCHAR(40) NOT NULL,
@@ -56,11 +56,16 @@ CREATE TABLE vehicle (
   -- so other tables can ref (plate, engine, chassis)
   CONSTRAINT vehicle_keys_uk UNIQUE(plate_number, engine_number, chassis_number),
 
+  CONSTRAINT vehicle_year_chk CHECK (`year` BETWEEN 1900 AND 2100),
+  CONSTRAINT vehicle_type_chk CHECK (
+    vehicle_type IN ('Sedan', 'SUV', 'Pickup Truck', 'Van', 'Motorcycle', 'Bus', 'Truck')
+  ),
+
   CONSTRAINT vehicle_owner_fk
-  FOREIGN KEY(owner_license_number)
-  REFERENCES driver(license_number)
-  ON DELETE RESTRICT
-  ON UPDATE RESTRICT
+    FOREIGN KEY(owner_license_number)
+    REFERENCES driver(license_number)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 );
 
 -- REGISTRATION
@@ -76,7 +81,11 @@ CREATE TABLE registration (
   chassis_number VARCHAR(30) NOT NULL,
 
   CONSTRAINT registration_number_pk PRIMARY KEY(registration_number),
-  CONSTRAINT registration_vehicle_fk FOREIGN KEY(plate_number, engine_number, chassis_number) REFERENCES vehicle(plate_number, engine_number, chassis_number)
+  CONSTRAINT registration_vehicle_fk
+    FOREIGN KEY(plate_number, engine_number, chassis_number)
+    REFERENCES vehicle(plate_number, engine_number, chassis_number)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 );
 
 -- VIOLATION_TICKET
@@ -95,11 +104,15 @@ CREATE TABLE violation_ticket (
 
   CONSTRAINT violation_ticket_pk PRIMARY KEY(ticket_id),
   CONSTRAINT vt_driver_fk
-  FOREIGN KEY(license_number)
-  REFERENCES driver(license_number)
-  ON DELETE RESTRICT
-  ON UPDATE RESTRICT,
-  CONSTRAINT vt_vehicle_fk FOREIGN KEY(plate_number, engine_number, chassis_number) REFERENCES vehicle(plate_number, engine_number, chassis_number)
+    FOREIGN KEY(license_number)
+    REFERENCES driver(license_number)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
+  CONSTRAINT vt_vehicle_fk
+    FOREIGN KEY(plate_number, engine_number, chassis_number)
+    REFERENCES vehicle(plate_number, engine_number, chassis_number)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 );
 
 -- VIOLATION

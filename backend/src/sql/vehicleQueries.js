@@ -1,15 +1,6 @@
 // vehicle queries
 
 module.exports = {
-
-  /*
-   * Fetch vehicles with owner name joined from driver.
-   * The (? IS NULL OR ...) pattern lets one query serve both the list endpoint
-   * (pass null) and the single-vehicle lookup (pass plate_number) so the 12-column
-   * SELECT and JOIN are not duplicated. Previously `list` and `getByPlate` were
-   * copy-pasted — adding a column required editing both.
-   * Params: [plateNumber, plateNumber] — pass null for both to get all rows.
-   */
   list: `
     SELECT
       v.plate_number,
@@ -30,17 +21,12 @@ module.exports = {
     ORDER BY v.plate_number
   `,
 
-  // Insert a new vehicle.
   create: `
     INSERT INTO vehicle
       (plate_number, engine_number, chassis_number, \`year\`, color, model, make, vehicle_type, owner_license_number)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
 
-  // Update editable fields on an existing vehicle.
-  // plate_number, engine_number, chassis_number are NOT updated — they form the
-  // composite key that violation_ticket and registration reference via FK.
-  // Params: make, model, year, color, vehicle_type, owner_license_number, plate_number (WHERE)
   update: `
     UPDATE vehicle
     SET make                  = ?,
@@ -52,10 +38,36 @@ module.exports = {
     WHERE plate_number = ?
   `,
 
-  // Delete vehicle by plate.
-  delete: `DELETE FROM vehicle WHERE plate_number = ?`,
+  delete: `
+    DELETE FROM vehicle
+    WHERE plate_number = ?
+  `,
 
-  // Add backend search endpoints
+  ownerExists: `
+    SELECT COUNT(*) AS total
+    FROM driver
+    WHERE license_number = ?
+  `,
+
+  findCreateConflicts: `
+    SELECT
+      (SELECT COUNT(*) FROM vehicle WHERE plate_number = ?) AS plate_count,
+      (SELECT COUNT(*) FROM vehicle WHERE engine_number = ?) AS engine_count,
+      (SELECT COUNT(*) FROM vehicle WHERE chassis_number = ?) AS chassis_count
+  `,
+
+  countRegistrationHistory: `
+    SELECT COUNT(*) AS total
+    FROM registration
+    WHERE plate_number = ?
+  `,
+
+  countViolationTickets: `
+    SELECT COUNT(*) AS total
+    FROM violation_ticket
+    WHERE plate_number = ?
+  `,
+
   search: `
     SELECT
       v.plate_number, v.engine_number, v.chassis_number,
