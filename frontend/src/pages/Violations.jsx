@@ -339,7 +339,7 @@ export default function Violations() {
             <div className="pageSub">Track and manage traffic violation tickets</div>
           </div>
           <button className="primaryBtn" onClick={openCreateModal}>
-            <span className="plus">+</span> Create Ticket
+            <span className="plus">+</span> Add Ticket
           </button>
         </div>
 
