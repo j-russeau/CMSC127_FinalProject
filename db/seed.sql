@@ -12,33 +12,51 @@ TRUNCATE TABLE driver;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- ─────────────────────────────────────────────────────────────────────────────
+START TRANSACTION;
+
+-- ---------------------------------------------------------------------------
 -- 1) DRIVERS
 -- Coverage:
--- - Query 1: Professional + valid + M + age 18–60 (D06-11-009385, G07-18-777777)
--- - Query 4: expired/suspended/revoked drivers included
--- ─────────────────────────────────────────────────────────────────────────────
-INSERT INTO driver VALUES
+-- - Report 1 has multiple Professional, valid, male drivers aged 18-60.
+-- - Report 4 has expired, suspended, and revoked licenses.
+-- - Some "valid" licenses are near expiry to make date-sensitive UI realistic.
+-- ---------------------------------------------------------------------------
+INSERT INTO driver
+  (license_number, license_type, first_name, middle_name, last_name, sex,
+   date_of_birth, license_status, license_expiration_date, license_issuance_date)
+VALUES
 ('D06-11-009385','Professional','Juan','Perez','Dela Cruz','M','1985-06-15','valid','2030-01-01','2020-01-01'),
 ('D07-12-009386','Professional','Ana','Luna','Reyes','F','1990-02-20','valid','2029-02-20','2019-02-20'),
 ('A01-22-111111','Non-Professional','Maria','Santos','Clara','F','1995-10-10','suspended','2028-05-20','2022-05-20'),
 ('B02-23-222222','Student Permit','Pedro','Reyes','Penduko','M','2005-12-01','expired','2024-12-01','2023-12-01'),
 ('C03-20-333333','Non-Professional','Rogelio',NULL,'Cruz','M','1960-07-07','valid','2027-07-07','2022-07-07'),
 ('D04-21-444444','Professional','Ben',NULL,'Torres','M','1988-03-03','revoked','2026-03-03','2021-03-03'),
-('E05-22-555555','Student Permit','Liza',NULL,'Garcia','F','2007-01-15','valid','2025-01-15','2024-01-15'),
+('E05-22-555555','Student Permit','Liza',NULL,'Garcia','F','2007-01-15','expired','2025-01-15','2024-01-15'),
 ('F06-19-666666','Non-Professional','Karla','M.','Lopez','F','1999-11-11','expired','2024-11-11','2019-11-11'),
 ('G07-18-777777','Professional','Mark',NULL,'Santos','M','2000-08-08','valid','2030-08-08','2020-08-08'),
 ('H08-17-888888','Non-Professional','Anthony',NULL,'Rojo','M','1978-04-04','valid','2028-04-04','2023-04-04'),
 ('I09-16-999999','Professional','Jericho',NULL,'Gabion','M','1982-09-09','suspended','2029-09-09','2019-09-09'),
-('J10-15-000001','Student Permit','Lakeisha','Mae','Austria','F','2004-05-05','valid','2026-05-05','2025-05-05');
+('J10-15-000001','Student Permit','Lakeisha','Mae','Austria','F','2004-05-05','valid','2027-05-05','2025-05-05'),
+('K11-14-000002','Professional','Sofia','Ramos','Mendoza','F','1992-12-12','valid','2031-12-12','2021-12-12'),
+('L12-13-000003','Non-Professional','Noel','Dizon','Bautista','M','1975-01-30','valid','2027-01-30','2022-01-30'),
+('M13-12-000004','Professional','Carlo','Vega','Villanueva','M','1970-06-18','expired','2025-06-18','2020-06-18'),
+('N14-11-000005','Professional','Patricia','Uy','Flores','F','1987-09-25','suspended','2028-09-25','2018-09-25'),
+('O15-10-000006','Student Permit','Miguel','Lim','Navarro','M','2006-04-14','valid','2027-04-14','2025-04-14'),
+('P16-09-000007','Non-Professional','Rosa','Cruz','Aquino','F','1968-02-02','valid','2026-12-31','2021-12-31'),
+('Q17-08-000008','Professional','Victor','Tan','Lim','M','1998-07-19','valid','2031-07-19','2021-07-19'),
+('R18-07-000009','Non-Professional','Nina','Sy','Tan','F','1983-11-27','revoked','2027-11-27','2017-11-27'),
+('S19-06-000010','Professional','Arnel','Diaz','Ramos','M','1991-03-08','valid','2030-03-08','2020-03-08'),
+('T20-05-000011','Professional','Bianca','Lee','Sy','F','1996-08-21','valid','2032-08-21','2022-08-21');
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 2) ADDRESSES (multi-valued OK: (license_number, address) composite PK)
--- ─────────────────────────────────────────────────────────────────────────────
-INSERT INTO driver_has_address VALUES
+-- ---------------------------------------------------------------------------
+-- 2) DRIVER ADDRESSES
+-- Multi-valued addresses are included for several drivers.
+-- ---------------------------------------------------------------------------
+INSERT INTO driver_has_address (license_number, address) VALUES
 ('D06-11-009385','123 Rizal St., Manila City'),
 ('D06-11-009385','Unit 4B, 88 Commonwealth Ave., Quezon City'),
 ('D07-12-009386','45 P. Burgos St., Cebu City'),
+('D07-12-009386','21 Mango Ave., Cebu City'),
 ('A01-22-111111','456 Bonifacio Ave., Quezon City'),
 ('B02-23-222222','789 Mabini St., Makati City'),
 ('C03-20-333333','12 Aguinaldo Hwy, Cavite'),
@@ -48,121 +66,309 @@ INSERT INTO driver_has_address VALUES
 ('G07-18-777777','88 Taft Ave., Manila City'),
 ('H08-17-888888','102 Session Rd., Baguio City'),
 ('I09-16-999999','77 EDSA, Mandaluyong City'),
-('J10-15-000001','15 JP Laurel, Batangas City');
+('J10-15-000001','15 JP Laurel, Batangas City'),
+('K11-14-000002','14 Katipunan Ave., Quezon City'),
+('K11-14-000002','Greenbelt Residences, Makati City'),
+('L12-13-000003','230 Ortigas Ave., Pasig City'),
+('M13-12-000004','61 Governor Drive, Dasmarinas, Cavite'),
+('N14-11-000005','89 Matina Crossing, Davao City'),
+('O15-10-000006','72 Lacson St., Bacolod City'),
+('P16-09-000007','19 Leonard Wood Rd., Baguio City'),
+('Q17-08-000008','41 BGC 5th Ave., Taguig City'),
+('R18-07-000009','55 Boni Ave., Mandaluyong City'),
+('S19-06-000010','11 Osmena Blvd., Cebu City'),
+('T20-05-000011','27 M.H. del Pilar St., Manila City');
 
--- ─────────────────────────────────────────────────────────────────────────────
+-- ---------------------------------------------------------------------------
 -- 3) VEHICLES
 -- Coverage:
--- - Query 2: multiple vehicles owned by D06-11-009385
--- - Query 7: vehicles appear in tickets across multiple cities
--- ─────────────────────────────────────────────────────────────────────────────
-INSERT INTO vehicle VALUES
+-- - Report 2: D06-11-009385 owns three vehicles.
+-- - Report 7: vehicles appear in tickets across NCR, Cebu, Davao, Baguio,
+--   Batangas, Cavite, Iloilo, and Bulacan locations.
+-- ---------------------------------------------------------------------------
+INSERT INTO vehicle
+  (plate_number, engine_number, chassis_number, `year`, color, model, make,
+   vehicle_type, owner_license_number)
+VALUES
 ('ABC-1234','ENG001','CHAS001',2018,'Red','Vios','Toyota','private car','D06-11-009385'),
 ('XYZ-9876','ENG002','CHAS002',2020,'Black','Civic','Honda','private car','D06-11-009385'),
 ('QWE-4567','ENG004','CHAS004',2022,'White','Raize','Toyota','private car','D06-11-009385'),
-
 ('DEF-5678','ENG003','CHAS003',2015,'White','Hiace','Toyota','public utility vehicle','A01-22-111111'),
 ('GHI-1111','ENG005','CHAS005',2019,'Silver','Fortuner','Toyota','private car','D07-12-009386'),
 ('JKL-2222','ENG006','CHAS006',2017,'Blue','NMAX','Yamaha','motorcycle','C03-20-333333'),
-
 ('MNO-3333','ENG007','CHAS007',2016,'Gray','L300','Mitsubishi','utility vehicle','D04-21-444444'),
 ('PQR-4444','ENG008','CHAS008',2021,'Green','Click','Honda','motorcycle','E05-22-555555'),
 ('STU-5555','ENG009','CHAS009',2014,'White','Wigo','Toyota','private car','F06-19-666666'),
-
 ('VWX-6666','ENG010','CHAS010',2023,'Black','Navara','Nissan','pickup','G07-18-777777'),
 ('YZA-7777','ENG011','CHAS011',2020,'Red','Mirage','Mitsubishi','private car','H08-17-888888'),
-('BCD-8888','ENG012','CHAS012',2019,'Blue','Aerox','Yamaha','motorcycle','I09-16-999999');
+('BCD-8888','ENG012','CHAS012',2019,'Blue','Aerox','Yamaha','motorcycle','I09-16-999999'),
+('CDE-9012','ENG013','CHAS013',2021,'White','Innova','Toyota','public utility vehicle','K11-14-000002'),
+('EFG-2345','ENG014','CHAS014',2018,'Gray','City','Honda','private car','L12-13-000003'),
+('HIJ-3456','ENG015','CHAS015',2024,'Blue','Yaris Cross','Toyota','private car','K11-14-000002'),
+('KLM-4567','ENG016','CHAS016',2016,'Yellow','Canter','Fuso','truck','M13-12-000004'),
+('NOP-5678','ENG017','CHAS017',2022,'Orange','Burgman','Suzuki','motorcycle','N14-11-000005'),
+('QRS-6789','ENG018','CHAS018',2020,'White','Xpander','Mitsubishi','private car','P16-09-000007'),
+('TUV-7890','ENG019','CHAS019',2019,'Black','Ranger','Ford','pickup','Q17-08-000008'),
+('WXY-8901','ENG020','CHAS020',2017,'Red','Almera','Nissan','private car','R18-07-000009'),
+('ZAB-9012','ENG021','CHAS021',2023,'Silver','Corolla Cross','Toyota','private car','S19-06-000010'),
+('CBA-1122','ENG022','CHAS022',2022,'Black','XMAX','Yamaha','motorcycle','T20-05-000011'),
+('LTO-2026','ENG023','CHAS023',2026,'White','Vios','Toyota','taxi','D07-12-009386'),
+('NCR-4321','ENG024','CHAS024',2021,'Green','Urvan','Nissan','public utility vehicle','I09-16-999999'),
+('CEB-2468','ENG025','CHAS025',2020,'Blue','Raider','Suzuki','motorcycle','B02-23-222222'),
+('DVO-1357','ENG026','CHAS026',2018,'Black','Montero','Mitsubishi','private car','O15-10-000006');
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 4) REGISTRATIONS (history + latest view behavior)
--- Coverage:
--- - Query 3: expired latest registrations as of 2025-04-12:
---    XYZ-9876 latest exp 2025-03-01
---    DEF-5678 latest exp 2025-01-10
---    STU-5555 latest exp 2025-02-15
--- ─────────────────────────────────────────────────────────────────────────────
+-- ---------------------------------------------------------------------------
+-- 4) REGISTRATION HISTORY
+-- Rich registration history is the main purpose of this seed.
+-- - Latest registrations are selected by MAX(registration_date) in
+--   latest_registration_vu.
+-- - Several vehicles have expired latest registrations.
+-- - Several vehicles expire within 30 days of 2026-05-19 for the dashboard.
+-- ---------------------------------------------------------------------------
+INSERT INTO registration
+  (registration_number, expiration_date, registration_status, registration_date,
+   plate_number, engine_number, chassis_number)
+VALUES
+-- ABC-1234: long clean renewal history, active latest
+('REG-ABC-2022','2023-01-15','expired','2022-01-15','ABC-1234','ENG001','CHAS001'),
+('REG-ABC-2023','2024-01-15','expired','2023-01-15','ABC-1234','ENG001','CHAS001'),
+('REG-ABC-2024','2025-01-15','expired','2024-01-15','ABC-1234','ENG001','CHAS001'),
+('REG-ABC-2025','2026-01-15','expired','2025-01-15','ABC-1234','ENG001','CHAS001'),
+('REG-ABC-2026','2027-01-15','active','2026-01-15','ABC-1234','ENG001','CHAS001'),
 
--- ABC-1234 (active latest)
-INSERT INTO registration VALUES
-('REG001','2027-01-15','active','2026-01-15','ABC-1234','ENG001','CHAS001'),
-('REG015','2026-01-15','expired','2025-01-15','ABC-1234','ENG001','CHAS001');
+-- XYZ-9876: missed 2025/2026 renewal, expired latest
+('REG-XYZ-2021','2022-03-01','expired','2021-03-01','XYZ-9876','ENG002','CHAS002'),
+('REG-XYZ-2022','2023-03-01','expired','2022-03-01','XYZ-9876','ENG002','CHAS002'),
+('REG-XYZ-2023','2024-03-01','expired','2023-03-01','XYZ-9876','ENG002','CHAS002'),
+('REG-XYZ-2024','2025-03-01','expired','2024-03-01','XYZ-9876','ENG002','CHAS002'),
 
--- XYZ-9876 (expired latest as of 2025-04-12)
-INSERT INTO registration VALUES
-('REG002','2024-03-01','expired','2023-03-01','XYZ-9876','ENG002','CHAS002'),
-('REG004','2025-03-01','expired','2024-03-01','XYZ-9876','ENG002','CHAS002');
+-- QWE-4567: active, renewed mid-year
+('REG-QWE-2023','2024-06-20','expired','2023-06-20','QWE-4567','ENG004','CHAS004'),
+('REG-QWE-2024','2025-06-20','expired','2024-06-20','QWE-4567','ENG004','CHAS004'),
+('REG-QWE-2025','2026-06-20','active','2025-06-20','QWE-4567','ENG004','CHAS004'),
 
--- QWE-4567 (active)
-INSERT INTO registration VALUES
-('REG005','2026-06-20','active','2025-06-20','QWE-4567','ENG004','CHAS004');
+-- DEF-5678: expired PUV latest
+('REG-DEF-2022','2023-01-10','expired','2022-01-10','DEF-5678','ENG003','CHAS003'),
+('REG-DEF-2023','2024-01-10','expired','2023-01-10','DEF-5678','ENG003','CHAS003'),
+('REG-DEF-2024','2025-01-10','expired','2024-01-10','DEF-5678','ENG003','CHAS003'),
 
--- DEF-5678 (expired latest as of 2025-04-12)
-INSERT INTO registration VALUES
-('REG003','2025-01-10','expired','2024-01-10','DEF-5678','ENG003','CHAS003');
+-- GHI-1111: active latest
+('REG-GHI-2023','2024-02-02','expired','2023-02-02','GHI-1111','ENG005','CHAS005'),
+('REG-GHI-2024','2025-02-02','expired','2024-02-02','GHI-1111','ENG005','CHAS005'),
+('REG-GHI-2025','2026-02-02','expired','2025-02-02','GHI-1111','ENG005','CHAS005'),
+('REG-GHI-2026','2027-02-02','active','2026-02-02','GHI-1111','ENG005','CHAS005'),
 
--- Others (mix of active/expired)
-INSERT INTO registration VALUES
-('REG007','2027-02-02','active','2026-02-02','GHI-1111','ENG005','CHAS005'),
-('REG008','2025-06-06','active','2024-06-06','JKL-2222','ENG006','CHAS006'),
-('REG009','2024-12-12','expired','2023-12-12','MNO-3333','ENG007','CHAS007'),
-('REG010','2027-03-03','active','2026-03-03','PQR-4444','ENG008','CHAS008'),
-('REG011','2025-02-15','expired','2024-02-15','STU-5555','ENG009','CHAS009'),
-('REG012','2027-08-08','active','2026-08-08','VWX-6666','ENG010','CHAS010'),
-('REG013','2026-09-09','active','2025-09-09','YZA-7777','ENG011','CHAS011'),
-('REG014','2025-07-07','active','2024-07-07','BCD-8888','ENG012','CHAS012');
+-- JKL-2222: expires soon around the 2026 demo date
+('REG-JKL-2023','2024-06-06','expired','2023-06-06','JKL-2222','ENG006','CHAS006'),
+('REG-JKL-2024','2025-06-06','expired','2024-06-06','JKL-2222','ENG006','CHAS006'),
+('REG-JKL-2025','2026-06-06','active','2025-06-06','JKL-2222','ENG006','CHAS006'),
 
--- ─────────────────────────────────────────────────────────────────────────────
+-- MNO-3333: old utility vehicle, expired latest
+('REG-MNO-2021','2022-12-12','expired','2021-12-12','MNO-3333','ENG007','CHAS007'),
+('REG-MNO-2022','2023-12-12','expired','2022-12-12','MNO-3333','ENG007','CHAS007'),
+('REG-MNO-2023','2024-12-12','expired','2023-12-12','MNO-3333','ENG007','CHAS007'),
+
+-- PQR-4444: active motorcycle
+('REG-PQR-2024','2025-03-03','expired','2024-03-03','PQR-4444','ENG008','CHAS008'),
+('REG-PQR-2025','2026-03-03','expired','2025-03-03','PQR-4444','ENG008','CHAS008'),
+('REG-PQR-2026','2027-03-03','active','2026-03-03','PQR-4444','ENG008','CHAS008'),
+
+-- STU-5555: expired latest
+('REG-STU-2022','2023-02-15','expired','2022-02-15','STU-5555','ENG009','CHAS009'),
+('REG-STU-2023','2024-02-15','expired','2023-02-15','STU-5555','ENG009','CHAS009'),
+('REG-STU-2024','2025-02-15','expired','2024-02-15','STU-5555','ENG009','CHAS009'),
+
+-- VWX-6666: active pickup
+('REG-VWX-2024','2025-08-08','expired','2024-08-08','VWX-6666','ENG010','CHAS010'),
+('REG-VWX-2025','2026-08-08','active','2025-08-08','VWX-6666','ENG010','CHAS010'),
+
+-- YZA-7777: active
+('REG-YZA-2023','2024-09-09','expired','2023-09-09','YZA-7777','ENG011','CHAS011'),
+('REG-YZA-2024','2025-09-09','expired','2024-09-09','YZA-7777','ENG011','CHAS011'),
+('REG-YZA-2025','2026-09-09','active','2025-09-09','YZA-7777','ENG011','CHAS011'),
+
+-- BCD-8888: expired latest, suspended-owner vehicle
+('REG-BCD-2022','2023-07-07','expired','2022-07-07','BCD-8888','ENG012','CHAS012'),
+('REG-BCD-2023','2024-07-07','expired','2023-07-07','BCD-8888','ENG012','CHAS012'),
+('REG-BCD-2024','2025-07-07','expired','2024-07-07','BCD-8888','ENG012','CHAS012'),
+
+-- CDE-9012: expires soon
+('REG-CDE-2022','2023-05-25','expired','2022-05-25','CDE-9012','ENG013','CHAS013'),
+('REG-CDE-2023','2024-05-25','expired','2023-05-25','CDE-9012','ENG013','CHAS013'),
+('REG-CDE-2024','2025-05-25','expired','2024-05-25','CDE-9012','ENG013','CHAS013'),
+('REG-CDE-2025','2026-05-25','active','2025-05-25','CDE-9012','ENG013','CHAS013'),
+
+-- EFG-2345: expires soon
+('REG-EFG-2023','2024-06-15','expired','2023-06-15','EFG-2345','ENG014','CHAS014'),
+('REG-EFG-2024','2025-06-15','expired','2024-06-15','EFG-2345','ENG014','CHAS014'),
+('REG-EFG-2025','2026-06-15','active','2025-06-15','EFG-2345','ENG014','CHAS014'),
+
+-- HIJ-3456: new vehicle, current active registration
+('REG-HIJ-2024','2025-04-20','expired','2024-04-20','HIJ-3456','ENG015','CHAS015'),
+('REG-HIJ-2025','2026-04-20','expired','2025-04-20','HIJ-3456','ENG015','CHAS015'),
+('REG-HIJ-2026','2027-04-20','active','2026-04-20','HIJ-3456','ENG015','CHAS015'),
+
+-- KLM-4567: truck with expired latest
+('REG-KLM-2021','2022-10-01','expired','2021-10-01','KLM-4567','ENG016','CHAS016'),
+('REG-KLM-2022','2023-10-01','expired','2022-10-01','KLM-4567','ENG016','CHAS016'),
+('REG-KLM-2023','2024-10-01','expired','2023-10-01','KLM-4567','ENG016','CHAS016'),
+('REG-KLM-2024','2025-10-01','expired','2024-10-01','KLM-4567','ENG016','CHAS016'),
+
+-- NOP-5678: expired recently
+('REG-NOP-2023','2024-04-30','expired','2023-04-30','NOP-5678','ENG017','CHAS017'),
+('REG-NOP-2024','2025-04-30','expired','2024-04-30','NOP-5678','ENG017','CHAS017'),
+('REG-NOP-2025','2026-04-30','expired','2025-04-30','NOP-5678','ENG017','CHAS017'),
+
+-- QRS-6789: active latest
+('REG-QRS-2024','2025-05-01','expired','2024-05-01','QRS-6789','ENG018','CHAS018'),
+('REG-QRS-2025','2026-05-01','expired','2025-05-01','QRS-6789','ENG018','CHAS018'),
+('REG-QRS-2026','2027-05-01','active','2026-05-01','QRS-6789','ENG018','CHAS018'),
+
+-- TUV-7890: active
+('REG-TUV-2023','2024-07-01','expired','2023-07-01','TUV-7890','ENG019','CHAS019'),
+('REG-TUV-2024','2025-07-01','expired','2024-07-01','TUV-7890','ENG019','CHAS019'),
+('REG-TUV-2025','2026-07-01','active','2025-07-01','TUV-7890','ENG019','CHAS019'),
+
+-- WXY-8901: expired latest
+('REG-WXY-2022','2023-05-30','expired','2022-05-30','WXY-8901','ENG020','CHAS020'),
+('REG-WXY-2023','2024-05-30','expired','2023-05-30','WXY-8901','ENG020','CHAS020'),
+('REG-WXY-2024','2025-05-30','expired','2024-05-30','WXY-8901','ENG020','CHAS020'),
+
+-- ZAB-9012: active
+('REG-ZAB-2024','2025-01-30','expired','2024-01-30','ZAB-9012','ENG021','CHAS021'),
+('REG-ZAB-2025','2026-01-30','expired','2025-01-30','ZAB-9012','ENG021','CHAS021'),
+('REG-ZAB-2026','2027-01-30','active','2026-01-30','ZAB-9012','ENG021','CHAS021'),
+
+-- CBA-1122: expires very soon
+('REG-CBA-2023','2024-05-22','expired','2023-05-22','CBA-1122','ENG022','CHAS022'),
+('REG-CBA-2024','2025-05-22','expired','2024-05-22','CBA-1122','ENG022','CHAS022'),
+('REG-CBA-2025','2026-05-22','active','2025-05-22','CBA-1122','ENG022','CHAS022'),
+
+-- LTO-2026: new taxi
+('REG-LTO-2026','2027-04-01','active','2026-04-01','LTO-2026','ENG023','CHAS023'),
+
+-- NCR-4321: expires on the 2026-05-19 demo date
+('REG-NCR-2023','2024-05-19','expired','2023-05-19','NCR-4321','ENG024','CHAS024'),
+('REG-NCR-2024','2025-05-19','expired','2024-05-19','NCR-4321','ENG024','CHAS024'),
+('REG-NCR-2025','2026-05-19','active','2025-05-19','NCR-4321','ENG024','CHAS024'),
+
+-- CEB-2468: expired latest
+('REG-CEB-2022','2023-11-12','expired','2022-11-12','CEB-2468','ENG025','CHAS025'),
+('REG-CEB-2023','2024-11-12','expired','2023-11-12','CEB-2468','ENG025','CHAS025'),
+('REG-CEB-2024','2025-11-12','expired','2024-11-12','CEB-2468','ENG025','CHAS025'),
+
+-- DVO-1357: active
+('REG-DVO-2023','2024-12-05','expired','2023-12-05','DVO-1357','ENG026','CHAS026'),
+('REG-DVO-2024','2025-12-05','expired','2024-12-05','DVO-1357','ENG026','CHAS026'),
+('REG-DVO-2025','2026-12-05','active','2025-12-05','DVO-1357','ENG026','CHAS026');
+
+-- ---------------------------------------------------------------------------
 -- 5) VIOLATION TICKETS
 -- Coverage:
--- - Query 5: multiple tickets for D06 in 2026 (TKT-001,003,004)
--- - Query 6: multiple types in year 2026
--- - Query 7: multiple cities in issued_at (Quezon City, Manila, Cebu, Makati)
--- ─────────────────────────────────────────────────────────────────────────────
-INSERT INTO violation_ticket VALUES
-('TKT-001','2026-05-20 14:30:00','unpaid','Commonwealth Ave, Quezon City','Officer Bato','D06-11-009385','ABC-1234','ENG001','CHAS001'),
-('TKT-002','2026-08-15 09:00:00','paid','EDSA, Quezon City','Officer Dalisay','A01-22-111111','DEF-5678','ENG003','CHAS003'),
-('TKT-003','2026-06-01 10:00:00','unpaid','Quezon City','Officer A','D06-11-009385','ABC-1234','ENG001','CHAS001'),
-('TKT-004','2026-02-10 08:20:00','contested','Taft Ave, Manila City','Officer Cruz','D06-11-009385','XYZ-9876','ENG002','CHAS002'),
-('TKT-005','2026-03-15 19:10:00','unpaid','Commonwealth Ave, Quezon City','Officer Reyes','A01-22-111111','DEF-5678','ENG003','CHAS003'),
-('TKT-006','2026-07-07 13:05:00','paid','Cebu City, Cebu','Officer Santos','D07-12-009386','GHI-1111','ENG005','CHAS005'),
-('TKT-007','2026-11-22 22:10:00','unpaid','Quezon City, NCR','Officer Lim','C03-20-333333','JKL-2222','ENG006','CHAS006'),
-('TKT-008','2025-12-30 09:45:00','paid','Quezon City, NCR','Officer Diaz','D06-11-009385','QWE-4567','ENG004','CHAS004'),
-('TKT-009','2025-04-05 17:30:00','unpaid','Makati City, NCR','Officer Go','F06-19-666666','STU-5555','ENG009','CHAS009'),
-('TKT-010','2024-09-09 11:00:00','paid','Manila City, NCR','Officer Pineda','H08-17-888888','YZA-7777','ENG011','CHAS011'),
-('TKT-011','2026-08-18 07:40:00','contested','Makati City, NCR','Officer Uy','G07-18-777777','VWX-6666','ENG010','CHAS010');
+-- - Report 5: D06-11-009385 has several 2026 tickets.
+-- - Report 6: 2026 includes every violation catalog type at least once.
+-- - Report 7: issued_at contains many searchable city/region strings.
+-- ---------------------------------------------------------------------------
+INSERT INTO violation_ticket
+  (ticket_id, `datetime`, violation_status, issued_at, apprehending_officer,
+   license_number, plate_number, engine_number, chassis_number)
+VALUES
+('TKT-001','2026-05-18 14:30:00','unpaid','Commonwealth Ave, Quezon City, NCR','Officer Bato','D06-11-009385','ABC-1234','ENG001','CHAS001'),
+('TKT-002','2026-05-17 09:00:00','paid','EDSA, Quezon City, NCR','Officer Dalisay','A01-22-111111','DEF-5678','ENG003','CHAS003'),
+('TKT-003','2026-04-11 10:00:00','unpaid','Katipunan Ave, Quezon City, NCR','Officer Aquino','D06-11-009385','ABC-1234','ENG001','CHAS001'),
+('TKT-004','2026-03-20 08:20:00','contested','Taft Ave, Manila City, NCR','Officer Cruz','D06-11-009385','XYZ-9876','ENG002','CHAS002'),
+('TKT-005','2026-03-15 19:10:00','unpaid','Commonwealth Ave, Quezon City, NCR','Officer Reyes','A01-22-111111','DEF-5678','ENG003','CHAS003'),
+('TKT-006','2026-02-28 13:05:00','paid','Osmena Blvd, Cebu City, Cebu','Officer Santos','D07-12-009386','GHI-1111','ENG005','CHAS005'),
+('TKT-007','2026-02-15 22:10:00','unpaid','Quezon Ave, Quezon City, NCR','Officer Lim','C03-20-333333','JKL-2222','ENG006','CHAS006'),
+('TKT-008','2025-12-30 09:45:00','paid','Mindanao Ave, Quezon City, NCR','Officer Diaz','D06-11-009385','QWE-4567','ENG004','CHAS004'),
+('TKT-009','2025-04-05 17:30:00','unpaid','Ayala Ave, Makati City, NCR','Officer Go','F06-19-666666','STU-5555','ENG009','CHAS009'),
+('TKT-010','2024-09-09 11:00:00','paid','Roxas Blvd, Manila City, NCR','Officer Pineda','H08-17-888888','YZA-7777','ENG011','CHAS011'),
+('TKT-011','2026-01-12 07:40:00','contested','Buendia Ave, Makati City, NCR','Officer Uy','G07-18-777777','VWX-6666','ENG010','CHAS010'),
+('TKT-012','2026-05-05 16:25:00','unpaid','Espana Blvd, Manila City, NCR','Officer Rivera','D06-11-009385','XYZ-9876','ENG002','CHAS002'),
+('TKT-013','2026-04-22 06:50:00','paid','Aurora Blvd, Quezon City, NCR','Officer Santos','K11-14-000002','CDE-9012','ENG013','CHAS013'),
+('TKT-014','2026-03-01 12:00:00','unpaid','Ortigas Ave, Pasig City, NCR','Officer Mariano','L12-13-000003','EFG-2345','ENG014','CHAS014'),
+('TKT-015','2026-04-09 15:45:00','unpaid','Aguinaldo Hwy, Dasmarinas, Cavite','Officer Tolentino','M13-12-000004','KLM-4567','ENG016','CHAS016'),
+('TKT-016','2026-05-02 20:05:00','paid','Matina Crossing, Davao City, Davao del Sur','Officer Garcia','N14-11-000005','NOP-5678','ENG017','CHAS017'),
+('TKT-017','2026-02-05 10:30:00','unpaid','Session Rd, Baguio City, Benguet','Officer Ramos','P16-09-000007','QRS-6789','ENG018','CHAS018'),
+('TKT-018','2026-05-10 18:15:00','paid','C5 Road, Taguig City, NCR','Officer Enriquez','Q17-08-000008','TUV-7890','ENG019','CHAS019'),
+('TKT-019','2025-11-17 08:35:00','contested','Boni Ave, Mandaluyong City, NCR','Officer Co','R18-07-000009','WXY-8901','ENG020','CHAS020'),
+('TKT-020','2026-01-25 23:05:00','unpaid','Quezon Memorial Circle, Quezon City, NCR','Officer Velasco','D06-11-009385','QWE-4567','ENG004','CHAS004'),
+('TKT-021','2024-03-14 09:15:00','paid','Mango Ave, Cebu City, Cebu','Officer Mercado','S19-06-000010','ZAB-9012','ENG021','CHAS021'),
+('TKT-022','2026-05-12 07:20:00','unpaid','Del Pilar St, Manila City, NCR','Officer Bautista','T20-05-000011','CBA-1122','ENG022','CHAS022'),
+('TKT-023','2026-04-18 11:40:00','paid','Quezon Ave, Quezon City, NCR','Officer Villar','D07-12-009386','LTO-2026','ENG023','CHAS023'),
+('TKT-024','2026-03-27 17:55:00','unpaid','EDSA Shaw, Mandaluyong City, NCR','Officer Ang','I09-16-999999','NCR-4321','ENG024','CHAS024'),
+('TKT-025','2025-08-19 14:10:00','paid','Colon St, Cebu City, Cebu','Officer Chua','B02-23-222222','CEB-2468','ENG025','CHAS025'),
+('TKT-026','2026-05-01 06:35:00','paid','JP Laurel Ave, Davao City, Davao del Sur','Officer Valencia','O15-10-000006','DVO-1357','ENG026','CHAS026'),
+('TKT-027','2026-02-22 21:50:00','unpaid','JP Laurel Hwy, Batangas City, Batangas','Officer Luna','J10-15-000001','PQR-4444','ENG008','CHAS008'),
+('TKT-028','2025-06-03 12:25:00','paid','Tandang Sora Ave, Quezon City, NCR','Officer Beltran','C03-20-333333','JKL-2222','ENG006','CHAS006'),
+('TKT-029','2024-12-01 07:30:00','unpaid','Lopez Jaena St, Iloilo City, Iloilo','Officer Robles','D04-21-444444','MNO-3333','ENG007','CHAS007'),
+('TKT-030','2026-04-30 13:15:00','unpaid','Chino Roces Ave, Makati City, NCR','Officer Castro','F06-19-666666','STU-5555','ENG009','CHAS009'),
+('TKT-031','2026-05-09 09:05:00','paid','Kennon Rd, Baguio City, Benguet','Officer Padilla','H08-17-888888','YZA-7777','ENG011','CHAS011'),
+('TKT-032','2026-03-19 18:45:00','contested','NLEX Bocaue, Bulacan','Officer Serrano','G07-18-777777','VWX-6666','ENG010','CHAS010');
 
--- ─────────────────────────────────────────────────────────────────────────────
--- 6) VIOLATIONS (must match violationCatalog.js names + fines)
--- IDs kept short (<= 20 chars)
--- ─────────────────────────────────────────────────────────────────────────────
-INSERT INTO violation VALUES
-('V-001','Overspeeding',1500.00,'TKT-001'),
-('V-002','Reckless Driving',2000.00,'TKT-001'),
-('V-020','No Seatbelt',1000.00,'TKT-001'),
+-- ---------------------------------------------------------------------------
+-- 6) VIOLATIONS
+-- Names and fines must match backend/src/constants/violationCatalog.js.
+-- IDs are kept below VARCHAR(20).
+-- ---------------------------------------------------------------------------
+INSERT INTO violation
+  (violation_id, name, corresponding_fine_amount, ticket_id)
+VALUES
+('V001','Overspeeding',1500.00,'TKT-001'),
+('V002','Reckless Driving',2000.00,'TKT-001'),
+('V003','No Seatbelt',1000.00,'TKT-001'),
+('V004','No Helmet',1000.00,'TKT-002'),
+('V005','Using Mobile Phone While Driving',1000.00,'TKT-002'),
+('V006','Overspeeding',1500.00,'TKT-003'),
+('V007','Illegal Parking',500.00,'TKT-003'),
+('V008','Beating the Red Light',1500.00,'TKT-004'),
+('V009','Disregarding Traffic Signs',1500.00,'TKT-004'),
+('V010','No Helmet',1000.00,'TKT-005'),
+('V011','Driving Without License',3000.00,'TKT-005'),
+('V012','Driving Without License',3000.00,'TKT-006'),
+('V013','Smoke Belching',2000.00,'TKT-007'),
+('V014','Defective Lights',500.00,'TKT-007'),
+('V015','Counterflow',2000.00,'TKT-007'),
+('V016','Improper Overtaking',1000.00,'TKT-008'),
+('V017','Illegal Parking',500.00,'TKT-009'),
+('V018','Reckless Driving',2000.00,'TKT-010'),
+('V019','Overspeeding',1500.00,'TKT-011'),
+('V020','Using Mobile Phone While Driving',1000.00,'TKT-011'),
+('V021','Illegal Parking',500.00,'TKT-011'),
+('V022','Failure to Carry OR/CR',1000.00,'TKT-011'),
+('V023','Obstruction',1000.00,'TKT-012'),
+('V024','Illegal U-Turn',1000.00,'TKT-012'),
+('V025','Overloading',1500.00,'TKT-013'),
+('V026','Failure to Carry OR/CR',1000.00,'TKT-013'),
+('V027','Illegal U-Turn',1000.00,'TKT-014'),
+('V028','Smoke Belching',2000.00,'TKT-015'),
+('V029','Overloading',1500.00,'TKT-015'),
+('V030','No Helmet',1000.00,'TKT-016'),
+('V031','No Seatbelt',1000.00,'TKT-016'),
+('V032','No Child Restraint',1000.00,'TKT-017'),
+('V033','Using Mobile Phone While Driving',1000.00,'TKT-017'),
+('V034','Counterflow',2000.00,'TKT-018'),
+('V035','Reckless Driving',2000.00,'TKT-018'),
+('V036','Illegal Passing',1500.00,'TKT-019'),
+('V037','Driving Under the Influence',5000.00,'TKT-020'),
+('V038','Reckless Driving',2000.00,'TKT-020'),
+('V039','Overspeeding',1500.00,'TKT-021'),
+('V040','Illegal Parking',500.00,'TKT-022'),
+('V041','Obstruction',1000.00,'TKT-022'),
+('V042','Disregarding Traffic Signs',1500.00,'TKT-023'),
+('V043','Failure to Carry OR/CR',1000.00,'TKT-024'),
+('V044','Defective Lights',500.00,'TKT-024'),
+('V045','No Helmet',1000.00,'TKT-025'),
+('V046','No Seatbelt',1000.00,'TKT-025'),
+('V047','Overspeeding',1500.00,'TKT-026'),
+('V048','Illegal Passing',1500.00,'TKT-026'),
+('V049','Driving Without License',3000.00,'TKT-027'),
+('V050','Beating the Red Light',1500.00,'TKT-028'),
+('V051','Smoke Belching',2000.00,'TKT-029'),
+('V052','Illegal Parking',500.00,'TKT-030'),
+('V053','Using Mobile Phone While Driving',1000.00,'TKT-030'),
+('V054','No Seatbelt',1000.00,'TKT-031'),
+('V055','Counterflow',2000.00,'TKT-032'),
+('V056','Obstruction',1000.00,'TKT-032');
 
-('V-003','Overspeeding',1500.00,'TKT-002'),
-
-('V-004','Overspeeding',1500.00,'TKT-003'),
-('V-005','Illegal Parking',500.00,'TKT-003'),
-
-('V-006','Beating the Red Light',1500.00,'TKT-004'),
-
-('V-007','No Helmet',1000.00,'TKT-005'),
-('V-008','Using Mobile Phone While Driving',1000.00,'TKT-005'),
-
-('V-009','Driving Without License',3000.00,'TKT-006'),
-
-('V-010','Smoke Belching',2000.00,'TKT-007'),
-('V-011','Defective Lights',500.00,'TKT-007'),
-('V-021','Counterflow',2000.00,'TKT-007'),
-
-('V-012','Improper Overtaking',1000.00,'TKT-008'),
-
-('V-013','Illegal Parking',500.00,'TKT-009'),
-
-('V-014','Reckless Driving',2000.00,'TKT-010'),
-
-('V-015','Overspeeding',1500.00,'TKT-011'),
-('V-016','Using Mobile Phone While Driving',1000.00,'TKT-011'),
-('V-017','Illegal Parking',500.00,'TKT-011'),
-('V-022','Failure to Carry OR/CR',1000.00,'TKT-011');
+COMMIT;
