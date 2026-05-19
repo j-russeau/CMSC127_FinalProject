@@ -103,6 +103,14 @@ function validateDriverPayload(d, options = {}) {
     }
   }
 
+  if (requireLicenseNumber && !/^[A-Za-z0-9][A-Za-z0-9-]{4,19}$/.test(String(d.license_number).trim())) {
+    return "License number must be 5–20 characters (letters, numbers, and hyphens only).";
+  }
+
+  if (String(d.first_name).trim().length > 50) return "First name exceeds maximum length of 50 characters.";
+  if (String(d.last_name).trim().length > 50)  return "Last name exceeds maximum length of 50 characters.";
+  if (d.middle_name && String(d.middle_name).trim().length > 50) return "Middle name exceeds maximum length of 50 characters.";
+
   if (!LICENSE_TYPES.includes(d.license_type)) {
     return "Invalid license_type. Use Student Permit, Non-Professional, or Professional.";
   }
@@ -128,8 +136,12 @@ function validateDriverPayload(d, options = {}) {
     return "Date of birth cannot be in the future.";
   }
 
-  if (issuance > expiration) {
-    return "License issuance date cannot be after expiration date.";
+  if (issuance > today) {
+    return "License issuance date cannot be in the future.";
+  }
+
+  if (issuance >= expiration) {
+    return "License issuance date must be before expiration date.";
   }
 
   const age = ageFromDob(d.date_of_birth);
@@ -223,8 +235,10 @@ router.post("/", async (req, res) => {
   try {
     await conn.beginTransaction();
 
+    const licenseNumber = d.license_number.trim().toUpperCase();
+
     await conn.query(Q.create, [
-      d.license_number.trim(),
+      licenseNumber,
       d.license_type,
       d.first_name.trim(),
       d.middle_name ? d.middle_name.trim() : null,
@@ -238,7 +252,7 @@ router.post("/", async (req, res) => {
 
     if (addresses.length > 0) {
       const placeholders = addresses.map(() => "(?, ?)").join(", ");
-      const values = addresses.flatMap((addr) => [d.license_number.trim(), addr]);
+      const values = addresses.flatMap((addr) => [licenseNumber, addr]);
 
       await conn.query(
         `INSERT INTO driver_has_address (license_number, address) VALUES ${placeholders}`,
@@ -247,16 +261,17 @@ router.post("/", async (req, res) => {
     }
 
     await conn.commit();
-    res.status(201).json({ ok: true, data: { license_number: d.license_number.trim() } });
+    res.status(201).json({ ok: true, data: { license_number: licenseNumber } });
   } catch (err) {
     await conn.rollback();
     console.error(err);
 
     if (err.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({
-        ok: false,
-        error: "License number or duplicate address already exists.",
-      });
+      const msg = err.sqlMessage || err.message || "";
+      if (msg.includes("driver_has_address_pk")) {
+        return res.status(409).json({ ok: false, error: "Duplicate address already exists for this driver." });
+      }
+      return res.status(409).json({ ok: false, error: "License number already exists." });
     }
 
     res.status(500).json({ ok: false, error: err.message });

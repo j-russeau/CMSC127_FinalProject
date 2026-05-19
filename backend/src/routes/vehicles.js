@@ -5,6 +5,9 @@ const router  = express.Router();
 const db      = require("../db");
 const Q       = require("../sql/vehicleQueries");
 
+const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus", "Truck"];
+const MAX_YEAR = new Date().getFullYear() + 1;
+
 // ── GET /api/vehicles ─────────────────────────────────────────────────────────
 // The query accepts an optional plate filter via (? IS NULL OR ...).
 // Passing [null, null] returns all vehicles; the single-vehicle GET reuses the
@@ -61,28 +64,55 @@ router.post("/", async (req, res) => {
       "year", "color", "model", "make", "vehicle_type", "owner_license_number",
     ];
     for (const f of required) {
-      if (!v[f] && v[f] !== 0) {
+      if (v[f] === undefined || v[f] === null || (typeof v[f] === "string" && !v[f].trim())) {
         return res.status(400).json({ ok: false, error: `Missing required field: ${f}` });
       }
     }
 
+    const yr = Number(v.year);
+    if (!Number.isInteger(yr) || yr < 1900 || yr > MAX_YEAR) {
+      return res.status(400).json({ ok: false, error: `Year must be between 1900 and ${MAX_YEAR}.` });
+    }
+
+    if (!VEHICLE_TYPES.includes(v.vehicle_type)) {
+      return res.status(400).json({ ok: false, error: `Invalid vehicle type. Must be one of: ${VEHICLE_TYPES.join(", ")}.` });
+    }
+
+    const plate   = v.plate_number.trim().toUpperCase();
+    const engine  = v.engine_number.trim().toUpperCase();
+    const chassis = v.chassis_number.trim().toUpperCase();
+
+    if (plate.length > 15)              return res.status(400).json({ ok: false, error: "Plate number must be 15 characters or fewer." });
+    if (engine.length > 30)             return res.status(400).json({ ok: false, error: "Engine number must be 30 characters or fewer." });
+    if (chassis.length > 30)            return res.status(400).json({ ok: false, error: "Chassis number must be 30 characters or fewer." });
+    if (v.make.trim().length > 40)      return res.status(400).json({ ok: false, error: "Make must be 40 characters or fewer." });
+    if (v.model.trim().length > 40)     return res.status(400).json({ ok: false, error: "Model must be 40 characters or fewer." });
+    if (v.color.trim().length > 30)     return res.status(400).json({ ok: false, error: "Color must be 30 characters or fewer." });
+
     await db.query(Q.create, [
-      v.plate_number.trim(),
-      v.engine_number.trim(),
-      v.chassis_number.trim(),
-      Number(v.year),
+      plate,
+      engine,
+      chassis,
+      yr,
       v.color.trim(),
       v.model.trim(),
       v.make.trim(),
-      v.vehicle_type.trim(),
+      v.vehicle_type,
       v.owner_license_number.trim(),
     ]);
 
-    res.status(201).json({ ok: true, data: { plate_number: v.plate_number } });
+    res.status(201).json({ ok: true, data: { plate_number: plate } });
   } catch (err) {
     console.error(err);
     if (err.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ ok: false, error: "Plate number, engine number, or chassis number already exists." });
+      const msg = err.sqlMessage || err.message || "";
+      if (msg.includes("vehicle_engine_uk")) {
+        return res.status(409).json({ ok: false, error: "Engine number already exists." });
+      }
+      if (msg.includes("vehicle_chassis_uk")) {
+        return res.status(409).json({ ok: false, error: "Chassis number already exists." });
+      }
+      return res.status(409).json({ ok: false, error: "Plate number already exists." });
     }
     if (err.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(409).json({ ok: false, error: "Owner license number does not exist." });
@@ -102,17 +132,30 @@ router.put("/:plate_number", async (req, res) => {
 
     const required = ["make", "model", "year", "color", "vehicle_type", "owner_license_number"];
     for (const f of required) {
-      if (!v[f] && v[f] !== 0) {
+      if (v[f] === undefined || v[f] === null || (typeof v[f] === "string" && !v[f].trim())) {
         return res.status(400).json({ ok: false, error: `Missing required field: ${f}` });
       }
     }
 
+    const yr = Number(v.year);
+    if (!Number.isInteger(yr) || yr < 1900 || yr > MAX_YEAR) {
+      return res.status(400).json({ ok: false, error: `Year must be between 1900 and ${MAX_YEAR}.` });
+    }
+
+    if (!VEHICLE_TYPES.includes(v.vehicle_type)) {
+      return res.status(400).json({ ok: false, error: `Invalid vehicle type. Must be one of: ${VEHICLE_TYPES.join(", ")}.` });
+    }
+
+    if (v.make.trim().length > 40)  return res.status(400).json({ ok: false, error: "Make must be 40 characters or fewer." });
+    if (v.model.trim().length > 40) return res.status(400).json({ ok: false, error: "Model must be 40 characters or fewer." });
+    if (v.color.trim().length > 30) return res.status(400).json({ ok: false, error: "Color must be 30 characters or fewer." });
+
     const [result] = await db.query(Q.update, [
       v.make.trim(),
       v.model.trim(),
-      Number(v.year),
+      yr,
       v.color.trim(),
-      v.vehicle_type.trim(),
+      v.vehicle_type,
       v.owner_license_number.trim(),
       plate,
     ]);

@@ -173,13 +173,19 @@ export default function Vehicles() {
     if (isNaN(yr) || yr < 1900 || yr > new Date().getFullYear() + 1) {
       setAddErr("Enter a valid year."); return;
     }
+    if (form.plate_number.trim().length > 15)   { setAddErr("Plate number must be 15 characters or fewer."); return; }
+    if (form.engine_number.trim().length > 30)  { setAddErr("Engine number must be 30 characters or fewer."); return; }
+    if (form.chassis_number.trim().length > 30) { setAddErr("Chassis number must be 30 characters or fewer."); return; }
+    if (form.make.trim().length > 40)           { setAddErr("Make must be 40 characters or fewer."); return; }
+    if (form.model.trim().length > 40)          { setAddErr("Model must be 40 characters or fewer."); return; }
+    if (form.color.trim().length > 30)          { setAddErr("Color must be 30 characters or fewer."); return; }
 
     setSubmitting(true);
     try {
       await createVehicle({
-        plate_number:         form.plate_number.trim(),
-        engine_number:        form.engine_number.trim(),
-        chassis_number:       form.chassis_number.trim(),
+        plate_number:         form.plate_number.trim().toUpperCase(),
+        engine_number:        form.engine_number.trim().toUpperCase(),
+        chassis_number:       form.chassis_number.trim().toUpperCase(),
         make:                 form.make.trim(),
         model:                form.model.trim(),
         year:                 yr,
@@ -229,6 +235,9 @@ export default function Vehicles() {
     if (!editForm.color.trim())  { setEditErr("Color is required."); return; }
     if (!editForm.vehicle_type)  { setEditErr("Vehicle type is required."); return; }
     if (!editForm.owner_license_number.trim()) { setEditErr("Owner license number is required."); return; }
+    if (editForm.make.trim().length > 40)  { setEditErr("Make must be 40 characters or fewer."); return; }
+    if (editForm.model.trim().length > 40) { setEditErr("Model must be 40 characters or fewer."); return; }
+    if (editForm.color.trim().length > 30) { setEditErr("Color must be 30 characters or fewer."); return; }
 
     setEditSubmitting(true);
     try {
@@ -483,12 +492,12 @@ export default function Vehicles() {
                     value={form.plate_number} onChange={(e) => patchForm("plate_number", e.target.value)} />
                 </div>
                 <div className="fieldFull">
-                  <label>Engine Number (Unique)</label>
+                  <label>Engine Number</label>
                   <input className="input" placeholder="ENG-2024-001"
                     value={form.engine_number} onChange={(e) => patchForm("engine_number", e.target.value)} />
                 </div>
                 <div className="fieldFull">
-                  <label>Chassis Number (Unique)</label>
+                  <label>Chassis Number</label>
                   <input className="input" placeholder="CHS-2024-001"
                     value={form.chassis_number} onChange={(e) => patchForm("chassis_number", e.target.value)} />
                 </div>
