@@ -111,7 +111,7 @@ CREATE TABLE registration (
 -- VIOLATION_TICKET
 CREATE TABLE violation_ticket (
   ticket_id VARCHAR(20),
-  `datetime` DATETIME NOT NULL,  -- to differ from datetime()
+  `datetime` DATETIME NOT NULL,
   violation_status VARCHAR(20) NOT NULL,
   issued_at VARCHAR(100) NOT NULL,
   apprehending_officer VARCHAR(80),
@@ -123,11 +123,16 @@ CREATE TABLE violation_ticket (
   chassis_number VARCHAR(30) NOT NULL,
 
   CONSTRAINT violation_ticket_pk PRIMARY KEY(ticket_id),
+
+  CONSTRAINT vt_status_chk
+    CHECK (violation_status IN ('paid', 'unpaid', 'contested')),
+
   CONSTRAINT vt_driver_fk
     FOREIGN KEY(license_number)
     REFERENCES driver(license_number)
     ON DELETE RESTRICT
     ON UPDATE RESTRICT,
+
   CONSTRAINT vt_vehicle_fk
     FOREIGN KEY(plate_number, engine_number, chassis_number)
     REFERENCES vehicle(plate_number, engine_number, chassis_number)
@@ -142,8 +147,16 @@ CREATE TABLE violation (
   corresponding_fine_amount DECIMAL(10,2) NOT NULL,
 
   -- f key
-  ticket_id  VARCHAR(20) NOT NULL,
+  ticket_id VARCHAR(20) NOT NULL,
 
   CONSTRAINT violation_pk PRIMARY KEY(violation_id),
-  CONSTRAINT violation_ticket_fk FOREIGN KEY(ticket_id) REFERENCES violation_ticket(ticket_id)
+
+  CONSTRAINT violation_fine_chk
+    CHECK (corresponding_fine_amount >= 0),
+
+  CONSTRAINT violation_ticket_fk
+    FOREIGN KEY(ticket_id)
+    REFERENCES violation_ticket(ticket_id)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 );

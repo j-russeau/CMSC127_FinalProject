@@ -3,15 +3,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = {
-
-  /*
-   * Fetch all tickets with joined driver name, vehicle label, and summed fines.
-   * The (? IS NULL OR ...) pattern lets one query handle both "all tickets" and
-   * "filter by driver" without duplicating the 30-line JOIN body. Previously
-   * `list` and `listByDriver` were identical except for the WHERE clause —
-   * any column addition had to be made in two places.
-   * Params: [licenseNumber, licenseNumber] — pass null for both to get all rows.
-   */
   list: `
     SELECT
       vt.ticket_id,
@@ -42,18 +33,39 @@ module.exports = {
     ORDER BY vt.\`datetime\` DESC
   `,
 
-  // Fetch a single ticket by primary key (no joins — raw row only).
-  // Params: ticket_id
   getById: `
     SELECT *
     FROM violation_ticket
     WHERE ticket_id = ?
   `,
 
-  // Insert a new violation ticket.
-  // Params: ticket_id, datetime, violation_status, issued_at,
-  //         apprehending_officer, license_number,
-  //         plate_number, engine_number, chassis_number
+  getStatusById: `
+    SELECT ticket_id, violation_status
+    FROM violation_ticket
+    WHERE ticket_id = ?
+  `,
+
+  driverExists: `
+    SELECT COUNT(*) AS total
+    FROM driver
+    WHERE license_number = ?
+  `,
+
+  vehicleByCompositeForUpdate: `
+    SELECT plate_number, engine_number, chassis_number
+    FROM vehicle
+    WHERE plate_number = ?
+      AND engine_number = ?
+      AND chassis_number = ?
+    FOR UPDATE
+  `,
+
+  existingViolationIds: `
+    SELECT violation_id
+    FROM violation
+    WHERE violation_id IN (?)
+  `,
+
   create: `
     INSERT INTO violation_ticket
       (ticket_id, \`datetime\`, violation_status, issued_at, apprehending_officer,
@@ -61,15 +73,12 @@ module.exports = {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
 
-  // Update only the status of an existing ticket.
-  // Params: violation_status, ticket_id
   updateStatus: `
     UPDATE violation_ticket
     SET violation_status = ?
     WHERE ticket_id = ?
   `,
 
-  // Delete a ticket by primary key.
   delete: `
     DELETE FROM violation_ticket
     WHERE ticket_id = ?

@@ -5,33 +5,43 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const express = require("express");
-const router  = express.Router();
-const db      = require("../db");
-const Q       = require("../sql/violationsQueries");
-
-// Expose violation catalog to frontend
+const router = express.Router();
+const db = require("../db");
+const Q = require("../sql/violationsQueries");
 const catalog = require("../constants/violationCatalog");
 
+function hasCatalogViolation(name) {
+  return Object.prototype.hasOwnProperty.call(catalog, name);
+}
+
+function normalizeUpper(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function normalizeText(value) {
+  return String(value || "").trim();
+}
+
+// ── GET /api/violations/catalog ───────────────────────────────────────────────
 router.get("/catalog", (req, res) => {
   const items = Object.entries(catalog).map(([name, fine]) => ({
     name,
     corresponding_fine_amount: fine,
   }));
+
   res.json({ ok: true, data: items });
 });
 
 // ── GET /api/violations?ticket_id=... ────────────────────────────────────────
-// Returns all violations that belong to a given ticket.
-// ticket_id is required — violations are always fetched in the context of a ticket.
 router.get("/", async (req, res) => {
   try {
-    const { ticket_id } = req.query;
+    const ticketId = normalizeUpper(req.query.ticket_id);
 
-    if (!ticket_id) {
+    if (!ticketId) {
       return res.status(400).json({ ok: false, error: "ticket_id query param is required" });
     }
 
-    const [rows] = await db.query(Q.listByTicket, [ticket_id]);
+    const [rows] = await db.query(Q.listByTicket, [ticketId]);
     res.json({ ok: true, data: rows });
   } catch (err) {
     console.error(err);
@@ -40,45 +50,64 @@ router.get("/", async (req, res) => {
 });
 
 // ── POST /api/violations ──────────────────────────────────────────────────────
-// Creates a new violation record under an existing ticket.
-// Expects body: { violation_id, name, corresponding_fine_amount, ticket_id }
 router.post("/", async (req, res) => {
   try {
-    const v = req.body;
+    const raw = req.body;
 
-    // All four fields are required
-    const required = ["violation_id", "name", "corresponding_fine_amount", "ticket_id"];
-    for (const f of required) {
-      if (v[f] === undefined || v[f] === null || v[f] === "") {
-        return res.status(400).json({ ok: false, error: `Missing required field: ${f}` });
-      }
+    const violationId = normalizeUpper(raw.violation_id);
+    const name = normalizeText(raw.name);
+    const ticketId = normalizeUpper(raw.ticket_id);
+
+    if (!violationId) {
+      return res.status(400).json({ ok: false, error: "violation_id is required" });
     }
 
-    // Validate type exists
-    if (!catalog[v.name]) {
-      return res.status(400).json({ ok: false, error: "Invalid violation type" });
-    }
-
-    // Force fine to catalog (real-world behavior)
-    v.corresponding_fine_amount = catalog[v.name];
-
-    // Length safety
-    if (String(v.violation_id).length > 20) {
+    if (violationId.length > 20) {
       return res.status(400).json({ ok: false, error: "violation_id too long (max 20)" });
     }
 
-    const params = [v.violation_id, v.name, v.corresponding_fine_amount, v.ticket_id];
-    await db.query(Q.create, params);
+    if (!name) {
+      return res.status(400).json({ ok: false, error: "name is required" });
+    }
 
-    res.status(201).json({ ok: true, data: { violation_id: v.violation_id } });
+    if (!ticketId) {
+      return res.status(400).json({ ok: false, error: "ticket_id is required" });
+    }
+
+    if (!hasCatalogViolation(name)) {
+      return res.status(400).json({ ok: false, error: "Invalid violation type" });
+    }
+
+    const [[ticketCheck]] = await db.query(Q.ticketExists, [ticketId]);
+
+    if (Number(ticketCheck.total) === 0) {
+      return res.status(400).json({ ok: false, error: "ticket_id does not exist" });
+    }
+
+    const catalogFine = catalog[name];
+
+    await db.query(Q.create, [violationId, name, catalogFine, ticketId]);
+
+    res.status(201).json({
+      ok: true,
+      data: {
+        violation_id: violationId,
+        corresponding_fine_amount: catalogFine,
+      },
+    });
   } catch (err) {
     console.error(err);
 
     if (err.code === "ER_DUP_ENTRY") {
       return res.status(409).json({ ok: false, error: "violation_id already exists" });
     }
+
     if (err.code === "ER_NO_REFERENCED_ROW_2") {
-      return res.status(400).json({ ok: false, error: "ticket_id does not exist (FK)" });
+      return res.status(400).json({ ok: false, error: "ticket_id does not exist" });
+    }
+
+    if (err.code === "ER_CHECK_CONSTRAINT_VIOLATED") {
+      return res.status(400).json({ ok: false, error: "Violation data violates a database constraint" });
     }
 
     res.status(500).json({ ok: false, error: err.message });
@@ -86,20 +115,51 @@ router.post("/", async (req, res) => {
 });
 
 // ── DELETE /api/violations/:violation_id ──────────────────────────────────────
-// Deletes a single violation by primary key.
+// Allowed only if the ticket will still have at least one violation afterward.
 router.delete("/:violation_id", async (req, res) => {
-  try {
-    const { violation_id } = req.params;
-    const [result]         = await db.query(Q.delete, [violation_id]);
+  const violationId = normalizeUpper(req.params.violation_id);
 
-    if (result.affectedRows === 0) {
+  const conn = await db.getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    const [violationRows] = await conn.query(Q.getById, [violationId]);
+
+    if (violationRows.length === 0) {
+      await conn.rollback();
       return res.status(404).json({ ok: false, error: "Violation not found" });
     }
 
-    res.json({ ok: true, data: { deleted: violation_id } });
+    const ticketId = violationRows[0].ticket_id;
+
+    const [[countRow]] = await conn.query(Q.countByTicket, [ticketId]);
+
+    if (Number(countRow.total) <= 1) {
+      await conn.rollback();
+      return res.status(409).json({
+        ok: false,
+        error: "Cannot delete the last violation on a ticket.",
+      });
+    }
+
+    await conn.query(Q.delete, [violationId]);
+
+    await conn.commit();
+
+    res.json({
+      ok: true,
+      data: {
+        deleted: violationId,
+        ticket_id: ticketId,
+      },
+    });
   } catch (err) {
+    await conn.rollback();
     console.error(err);
     res.status(500).json({ ok: false, error: err.message });
+  } finally {
+    conn.release();
   }
 });
 

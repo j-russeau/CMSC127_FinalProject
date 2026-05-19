@@ -38,6 +38,20 @@ function genTicketId() {
 
 const STATUS_LABELS = { paid: "Paid", unpaid: "Unpaid", contested: "Contested" };
 
+const ALLOWED_STATUS_TRANSITIONS = {
+  unpaid: ["paid", "contested"],
+  contested: ["paid", "unpaid"],
+  paid: [],
+};
+
+function normalizeUpper(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function allowedStatusTransitions(status) {
+  return ALLOWED_STATUS_TRANSITIONS[String(status || "").toLowerCase()] || [];
+}
+
 function StatusPill({ status }) {
   const s = (status || "").toLowerCase();
   let cls = "statusPill";
@@ -136,9 +150,16 @@ export default function Violations() {
     try {
       const rows = await listVehicles();
       const map = {};
+
       (rows || []).forEach((v) => {
-        map[v.plate_number] = v;
+        map[normalizeUpper(v.plate_number)] = {
+          ...v,
+          plate_number: normalizeUpper(v.plate_number),
+          engine_number: normalizeUpper(v.engine_number),
+          chassis_number: normalizeUpper(v.chassis_number),
+        };
       });
+
       setVehicleMap(map);
     } catch {
       // non-critical
@@ -179,12 +200,15 @@ export default function Violations() {
 
   // Auto-fill engine/chassis when plate matches known vehicle
   useEffect(() => {
-    const match = vehicleMap[ticketForm.plate_number?.trim()];
+    const plate = normalizeUpper(ticketForm.plate_number);
+    const match = vehicleMap[plate];
+
     if (match) {
       setTicketForm((prev) => ({
         ...prev,
-        engine_number: match.engine_number,
-        chassis_number: match.chassis_number,
+        plate_number: plate,
+        engine_number: normalizeUpper(match.engine_number),
+        chassis_number: normalizeUpper(match.chassis_number),
       }));
     }
   }, [ticketForm.plate_number, vehicleMap]);
@@ -228,18 +252,54 @@ export default function Violations() {
   async function submitCreateTicket() {
     setModalErr("");
 
+    const ticketId = normalizeUpper(ticketForm.ticket_id);
+    const licenseNumber = normalizeUpper(ticketForm.license_number);
+    const plateNumber = normalizeUpper(ticketForm.plate_number);
+    const engineNumber = normalizeUpper(ticketForm.engine_number);
+    const chassisNumber = normalizeUpper(ticketForm.chassis_number);
+    const issuedAt = String(ticketForm.issued_at || "").trim();
+    const officer = String(ticketForm.apprehending_officer || "").trim();
+
     const required = [
-      ["Ticket ID", ticketForm.ticket_id],
+      ["Ticket ID", ticketId],
       ["Date & Time", ticketForm.datetime_local],
-      ["Issued at", ticketForm.issued_at],
-      ["License number", ticketForm.license_number],
-      ["Plate number", ticketForm.plate_number],
-      ["Engine number", ticketForm.engine_number],
-      ["Chassis number", ticketForm.chassis_number],
+      ["Issued at", issuedAt],
+      ["License number", licenseNumber],
+      ["Plate number", plateNumber],
+      ["Engine number", engineNumber],
+      ["Chassis number", chassisNumber],
     ];
+
     for (const [label, value] of required) {
       if (!value || String(value).trim() === "") {
         setModalErr(`${label} is required.`);
+        return;
+      }
+    }
+
+    if (ticketId.length > 20) {
+      setModalErr("Ticket ID must be 20 characters or fewer.");
+      return;
+    }
+
+    if (issuedAt.length > 100) {
+      setModalErr("Issued At must be 100 characters or fewer.");
+      return;
+    }
+
+    if (officer.length > 80) {
+      setModalErr("Apprehending Officer must be 80 characters or fewer.");
+      return;
+    }
+
+    const matchedVehicle = vehicleMap[plateNumber];
+
+    if (matchedVehicle) {
+      if (
+        normalizeUpper(matchedVehicle.engine_number) !== engineNumber ||
+        normalizeUpper(matchedVehicle.chassis_number) !== chassisNumber
+      ) {
+        setModalErr("Vehicle identity mismatch. Plate, engine, and chassis must belong to the same vehicle.");
         return;
       }
     }
@@ -255,30 +315,34 @@ export default function Violations() {
 
     for (let i = 0; i < cleaned.length; i++) {
       const v = cleaned[i];
+
       if (!v.name) {
         setModalErr(`Violation ${i + 1}: name is required.`);
         return;
       }
-      const fine = Number(v.fine);
-      if (!Number.isFinite(fine) || fine < 0) {
-        setModalErr(`Violation ${i + 1}: fine must be ≥ 0.`);
+
+      const catalogMatch = catalog.find((x) => x.name === v.name);
+
+      if (!catalogMatch) {
+        setModalErr(`Violation ${i + 1}: select a valid catalog violation.`);
         return;
       }
     }
 
     const ticketPayload = {
-      ticket_id: ticketForm.ticket_id.trim(),
+      ticket_id: ticketId,
       datetime: toMysqlDateTime(ticketForm.datetime_local),
       violation_status: ticketForm.violation_status,
-      issued_at: ticketForm.issued_at.trim(),
-      apprehending_officer: ticketForm.apprehending_officer.trim() || null,
-      license_number: ticketForm.license_number.trim(),
-      plate_number: ticketForm.plate_number.trim(),
-      engine_number: ticketForm.engine_number.trim(),
-      chassis_number: ticketForm.chassis_number.trim(),
+      issued_at: issuedAt,
+      apprehending_officer: officer || null,
+      license_number: licenseNumber,
+      plate_number: plateNumber,
+      engine_number: engineNumber,
+      chassis_number: chassisNumber,
     };
 
     setCreating(true);
+
     try {
       await createTicketWithViolations({
         ticket: ticketPayload,
@@ -293,7 +357,6 @@ export default function Violations() {
       toast("Ticket created successfully.");
       await refreshTickets();
 
-      // Open details modal for the newly created ticket
       setSelectedTicketId(ticketPayload.ticket_id);
       setDetailsOpen(true);
       await loadViolations(ticketPayload.ticket_id);
@@ -489,17 +552,15 @@ export default function Violations() {
               {/* Status change buttons */}
               {selectedTicket ? (
                 <div className="statusUpdateRow">
-                  {["paid", "unpaid", "contested"]
-                    .filter((s) => s !== selectedTicket.violation_status)
-                    .map((s) => (
-                      <button
-                        key={s}
-                        className={`statusUpdateBtn statusUpdateBtn--${s}`}
-                        onClick={() => handleUpdateStatus(s)}
-                      >
-                        Mark as {s}
-                      </button>
-                    ))}
+                  {allowedStatusTransitions(selectedTicket.violation_status).map((s) => (
+                  <button
+                    key={s}
+                    className={`statusUpdateBtn statusUpdateBtn--${s}`}
+                    onClick={() => handleUpdateStatus(s)}
+                  >
+                    Mark as {s}
+                  </button>
+                ))}
                 </div>
               ) : null}
 
