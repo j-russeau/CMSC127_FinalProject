@@ -5,7 +5,7 @@
  */
 export default function ConfirmModal({ message, onConfirm, onCancel, confirmLabel = "Delete" }) {
   return (
-    <div className="modalOverlay" onClick={onCancel}>
+    <div className="modalOverlay">
       <div className="confirmModal" onClick={(e) => e.stopPropagation()}>
         <div className="confirmMessage">{message}</div>
         <div className="confirmFooter">

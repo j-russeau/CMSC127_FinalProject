@@ -506,7 +506,7 @@ export default function Vehicles() {
 
       {/* ── Edit Modal ── */}
       {editingVehicle && (
-        <div className="modalOverlay" onClick={() => setEditingVehicle(null)}>
+        <div className="modalOverlay">
           <div className="vehiclesAddModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div className="modalTitle">Edit Vehicle</div>
@@ -591,7 +591,7 @@ export default function Vehicles() {
 
       {/* ── Add Modal ── */}
       {addOpen && (
-        <div className="modalOverlay" onClick={() => setAddOpen(false)}>
+        <div className="modalOverlay">
           <div className="vehiclesAddModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div className="modalTitle">Add New Vehicle</div>

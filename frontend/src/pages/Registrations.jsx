@@ -520,7 +520,7 @@ export default function Registrations() {
 
       {/* ── Add Registration Modal ── */}
       {addOpen && (
-        <div className="modalOverlay" onClick={() => setAddOpen(false)}>
+        <div className="modalOverlay">
           <div className="registrationModal" onClick={(e) => e.stopPropagation()}>
             <div className="registrationModalHeader">
               <div>
@@ -669,7 +669,7 @@ export default function Registrations() {
 
       {/* ── Registration History Modal ── */}
       {historyOpen && historyVehicle && (
-        <div className="modalOverlay" onClick={() => setHistoryOpen(false)}>
+        <div className="modalOverlay">
           <div className="registrationHistoryModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div>

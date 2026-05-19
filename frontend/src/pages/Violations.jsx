@@ -425,7 +425,7 @@ export default function Violations() {
 
         {/* Details Modal */}
         {detailsOpen && selectedTicketId ? (
-          <div className="detailOverlay" onClick={() => setDetailsOpen(false)}>
+          <div className="modalOverlay">
             <div className="detailModal" onClick={(e) => e.stopPropagation()}>
               <div className="detailHeader">
                 <div className="detailHeaderTitle">
@@ -555,7 +555,7 @@ export default function Violations() {
 
         {/* Create Ticket Modal */}
         {createOpen && (
-          <div className="modalOverlay" onClick={() => setCreateOpen(false)}>
+          <div className="modalOverlay">
             <div className="modal wide" onClick={(e) => e.stopPropagation()}>
               <div className="modalHeader">
                 <div className="modalTitle">Create Violation Ticket</div>
