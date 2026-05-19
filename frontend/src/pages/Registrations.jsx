@@ -4,7 +4,7 @@
 // add-registration modal, and SQL preview toggle.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listVehicles } from "../api/vehicles";
 import {
   listRegistrationsRaw,
@@ -14,6 +14,7 @@ import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
 import SearchInput from "../components/SearchInput";
 import AutocompleteInput from "../components/AutocompleteInput";
+import "./Registrations.css";
 
 // Valid values based on the database/project specification
 const REGISTRATION_STATUSES = ["active", "expired", "suspended"];
@@ -65,75 +66,35 @@ ${JSON.stringify(params, null, 2)}`;
 
 function StatusPill({ status }) {
   const s = String(status || "").toLowerCase();
+  let cls = "registrationStatusPill";
 
-  const style = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 78,
-    padding: "6px 12px",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 700,
-    textTransform: "capitalize",
-    background: "rgba(134,134,139,0.12)",
-    color: "#86868B",
-  };
+  if (s === "active") cls += " registrationStatusPill--active";
+  if (s === "expired") cls += " registrationStatusPill--expired";
+  if (s === "suspended") cls += " registrationStatusPill--suspended";
 
-  if (s === "active") {
-    style.background = "rgba(52,199,89,0.12)";
-    style.color = "#34C759";
-  }
-
-  if (s === "expired") {
-    style.background = "rgba(255,149,0,0.12)";
-    style.color = "#FF9500";
-  }
-
-  if (s === "suspended") {
-    style.background = "rgba(255,59,48,0.12)";
-    style.color = "#FF3B30";
-  }
-
-  return <span style={style}>{s || "—"}</span>;
+  return <span className={cls}>{s || "—"}</span>;
 }
 
 function HistoryButton({ onClick }) {
   return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        padding: "5px 10px",
-        borderRadius: 999,
-        border: "1px solid rgba(255,255,255,0.65)",
-        background: "rgba(255,255,255,0.55)",
-        color: "#4A8FF9",
-        fontSize: 12,
-        fontWeight: 800,
-        cursor: "pointer",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.75)",
-      }}
-    >
+    <button className="registrationHistoryBtn" onClick={onClick}>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
         <path
           d="M3 12a9 9 0 1 0 3-6.7"
-          stroke="#4A8FF9"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
         />
         <path
           d="M3 4v6h6"
-          stroke="#4A8FF9"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M12 7v5l3 2"
-          stroke="#4A8FF9"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -485,98 +446,66 @@ export default function Registrations() {
             <div className="tableTitle">
               {loading ? "Loading..." : `Current Registrations (${filteredRows.length})`}
             </div>
-            <div style={{ color: "#86868B", fontSize: 13, marginTop: 4 }}>
+            <div className="registrationTableSubtitle">
               Latest registration record per vehicle
             </div>
           </div>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "155px 1.2fr 1.2fr 135px 135px 105px 95px",
-            gap: 12,
-            alignItems: "center",
-            padding: "12px 16px",
-            fontSize: 12,
-            color: "#86868B",
-            fontWeight: 700,
-          }}
-        >
-          <div>Registration No.</div>
-          <div>Vehicle</div>
-          <div>Owner</div>
-          <div>Registration Date</div>
-          <div>Expiration Date</div>
-          <div>Status</div>
-          <div>Actions</div>
+        <div className="registrationTableScroll">
+          <div className="registrationTableHeader registrationStickyHeader">
+            <div>Registration No.</div>
+            <div>Vehicle</div>
+            <div>Owner</div>
+            <div>Registration Date</div>
+            <div>Expiration Date</div>
+            <div>Status</div>
+            <div>Actions</div>
+          </div>
+
+          {loading && <div className="emptyState">Loading registrations...</div>}
+
+          {!loading && filteredRows.length === 0 && (
+            <div className="emptyState">No registrations found.</div>
+          )}
+
+          {!loading &&
+            filteredRows.map((r) => {
+              const v = r.vehicle || {};
+
+              return (
+                <div className="registrationTableRow" key={r.registration_number}>
+                  <div className="registrationMono registrationStrong">
+                    {r.registration_number}
+                  </div>
+
+                  <div className="registrationStack">
+                    <div className="registrationStrong">{r.plate_number}</div>
+                    <div className="registrationMuted">
+                      {vehicleName(v)} • {v.vehicle_type || "—"}
+                    </div>
+                  </div>
+
+                  <div className="registrationStack">
+                    <div className="registrationOwnerName">{driverName(v)}</div>
+                    <div className="registrationMuted registrationMono">
+                      {v.owner_license_number || "—"}
+                    </div>
+                  </div>
+
+                  <div>{formatDate(r.registration_date)}</div>
+                  <div>{formatDate(r.expiration_date)}</div>
+                  <div>
+                    <StatusPill status={r.registration_status} />
+                  </div>
+
+                  <div>
+                    <HistoryButton onClick={() => openHistory(r)} />
+                  </div>
+                </div>
+              );
+            })}
         </div>
-
-        {loading && <div className="emptyState">Loading registrations...</div>}
-
-        {!loading && filteredRows.length === 0 && (
-          <div className="emptyState">No registrations found.</div>
-        )}
-
-        {!loading &&
-          filteredRows.map((r) => {
-            const v = r.vehicle || {};
-
-            return (
-              <div
-                key={r.registration_number}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "155px 1.2fr 1.2fr 135px 135px 105px 95px",
-                  gap: 12,
-                  alignItems: "center",
-                  padding: "14px 16px",
-                  borderTop: "1px solid rgba(0,0,0,0.05)",
-                  fontSize: 14,
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                    fontWeight: 800,
-                    color: "#1D1D1F",
-                  }}
-                >
-                  {r.registration_number}
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <div style={{ fontWeight: 800, color: "#1D1D1F" }}>{r.plate_number}</div>
-                  <div style={{ color: "#86868B", fontSize: 12 }}>
-                    {vehicleName(v)} • {v.vehicle_type || "—"}
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <div style={{ fontWeight: 700, color: "#1D1D1F" }}>{driverName(v)}</div>
-                  <div
-                    style={{
-                      color: "#86868B",
-                      fontSize: 12,
-                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                    }}
-                  >
-                    {v.owner_license_number || "—"}
-                  </div>
-                </div>
-
-                <div>{formatDate(r.registration_date)}</div>
-                <div>{formatDate(r.expiration_date)}</div>
-                <div>
-                  <StatusPill status={r.registration_status} />
-                </div>
-
-                <div>
-                  <HistoryButton onClick={() => openHistory(r)} />
-                </div>
-              </div>
-            );
-          })}
       </div>
 
       {/* ── SQL preview ── */}
@@ -592,32 +521,13 @@ export default function Registrations() {
       {/* ── Add Registration Modal ── */}
       {addOpen && (
         <div className="modalOverlay" onClick={() => setAddOpen(false)}>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: 620,
-              maxWidth: "94vw",
-              maxHeight: "90vh",
-              overflowY: "auto",
-              background: "#fff",
-              borderRadius: 24,
-              boxShadow: "0 24px 64px rgba(0,0,0,0.2)",
-            }}
-          >
-            <div
-              style={{
-                padding: "24px 26px",
-                borderBottom: "1px solid rgba(0,0,0,0.06)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
+          <div className="registrationModal" onClick={(e) => e.stopPropagation()}>
+            <div className="registrationModalHeader">
               <div>
-                <div style={{ fontSize: 20, fontWeight: 900, color: "#1D1D1F" }}>
+                <div className="registrationModalTitle">
                   Add Registration
                 </div>
-                <div style={{ fontSize: 13, color: "#86868B", marginTop: 4 }}>
+                <div className="registrationModalSub">
                   Record a new vehicle registration or renewal
                 </div>
               </div>
@@ -627,22 +537,15 @@ export default function Registrations() {
               </button>
             </div>
 
-            <div style={{ padding: 26, display: "flex", flexDirection: "column", gap: 18 }}>
+            <div className="registrationModalBody">
               <div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 800,
-                    color: "#4A8FF9",
-                    marginBottom: 10,
-                  }}
-                >
+                <div className="registrationSectionTitle">
                   Vehicle Information
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
+                <div className="registrationFormStack">
                   <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                    <label className="registrationLabel">
                       Vehicle (Search by plate / make-model / owner)
                     </label>
 
@@ -660,9 +563,9 @@ export default function Registrations() {
                     />
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="registrationFormGrid2">
                     <div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                      <label className="registrationLabel">
                         Engine Number
                       </label>
                       <input
@@ -674,7 +577,7 @@ export default function Registrations() {
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                      <label className="registrationLabel">
                         Chassis Number
                       </label>
                       <input
@@ -689,32 +592,25 @@ export default function Registrations() {
               </div>
 
               <div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 800,
-                    color: "#4A8FF9",
-                    marginBottom: 10,
-                  }}
-                >
+                <div className="registrationSectionTitle">
                   Registration Details
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div className="registrationFormGrid2">
                   <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                    <label className="registrationLabel">
                       Registration Number
                     </label>
                     <input
                       className="input"
                       value={form.registration_number}
                       onChange={(e) => patchForm("registration_number", e.target.value)}
-                      placeholder="REG001"
+                      placeholder="REG-20260515-Y62J"
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                    <label className="registrationLabel">
                       Status
                     </label>
                     <select
@@ -731,7 +627,7 @@ export default function Registrations() {
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                    <label className="registrationLabel">
                       Registration Date
                     </label>
                     <input
@@ -743,7 +639,7 @@ export default function Registrations() {
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                    <label className="registrationLabel">
                       Expiration Date
                     </label>
                     <input
@@ -759,15 +655,7 @@ export default function Registrations() {
               {formErr && <div className="msgError">{formErr}</div>}
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 10,
-                padding: "18px 26px 24px",
-                borderTop: "1px solid rgba(0,0,0,0.06)",
-              }}
-            >
+            <div className="registrationModalFooter">
               <button className="secondaryBtn" onClick={() => setAddOpen(false)}>
                 Cancel
               </button>
@@ -782,23 +670,11 @@ export default function Registrations() {
       {/* ── Registration History Modal ── */}
       {historyOpen && historyVehicle && (
         <div className="modalOverlay" onClick={() => setHistoryOpen(false)}>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: 680,
-              maxWidth: "94vw",
-              maxHeight: "90vh",
-              overflowY: "auto",
-              background: "#fff",
-              borderRadius: 24,
-              boxShadow: "0 24px 64px rgba(0,0,0,0.2)",
-              padding: 24,
-            }}
-          >
+          <div className="registrationHistoryModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div>
                 <div className="modalTitle">Registration History</div>
-                <div style={{ color: "#86868B", fontSize: 13, marginTop: 4 }}>
+                <div className="registrationHistorySub">
                   {historyVehicle.plate_number} — {vehicleName(historyVehicle)}
                 </div>
               </div>
@@ -807,18 +683,8 @@ export default function Registrations() {
               </button>
             </div>
 
-            <div style={{ marginTop: 16 }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "150px 130px 130px 100px",
-                  gap: 12,
-                  padding: "10px 0",
-                  fontSize: 12,
-                  color: "#86868B",
-                  fontWeight: 800,
-                }}
-              >
+            <div className="registrationHistoryTableWrap">
+              <div className="registrationHistoryHeader">
                 <div>Registration No.</div>
                 <div>Registration Date</div>
                 <div>Expiration Date</div>
@@ -826,18 +692,8 @@ export default function Registrations() {
               </div>
 
               {historyRows.map((r) => (
-                <div
-                  key={r.registration_number}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "150px 130px 130px 100px",
-                    gap: 12,
-                    padding: "12px 0",
-                    borderTop: "1px solid rgba(0,0,0,0.06)",
-                    alignItems: "center",
-                  }}
-                >
-                  <div style={{ fontFamily: "ui-monospace, monospace", fontWeight: 800 }}>
+                <div className="registrationHistoryRow" key={r.registration_number}>
+                  <div className="registrationMono registrationStrong">
                     {r.registration_number}
                   </div>
                   <div>{formatDate(r.registration_date)}</div>

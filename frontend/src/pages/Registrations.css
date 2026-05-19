@@ -1,0 +1,256 @@
+/* Registrations.css — styles specific to Registration Management */
+
+/* ── Current registrations table ─────────────────────────────────────────── */
+
+.registrationTableSubtitle {
+  color: #86868B;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.registrationTableScroll {
+  max-height: 520px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 16px;
+}
+
+.registrationTableHeader,
+.registrationTableRow {
+  display: grid;
+  grid-template-columns: 155px 1.2fr 1.2fr 135px 135px 105px 95px;
+  gap: 12px;
+  align-items: center;
+  min-width: 980px;
+}
+
+.registrationTableHeader {
+  padding: 12px 16px;
+  font-size: 12px;
+  color: #86868B;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.registrationStickyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+}
+
+.registrationTableRow {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  color: #1D1D1F;
+}
+
+.registrationStack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.registrationStrong {
+  font-weight: 800;
+  color: #1D1D1F;
+}
+
+.registrationOwnerName {
+  font-weight: 700;
+  color: #1D1D1F;
+}
+
+.registrationMuted {
+  color: #86868B;
+  font-size: 12px;
+}
+
+.registrationMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ── Status pills ────────────────────────────────────────────────────────── */
+
+.registrationStatusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  background: rgba(134, 134, 139, 0.12);
+  color: #86868B;
+}
+
+.registrationStatusPill--active {
+  background: rgba(52, 199, 89, 0.12);
+  color: #34C759;
+}
+
+.registrationStatusPill--expired {
+  background: rgba(255, 149, 0, 0.12);
+  color: #FF9500;
+}
+
+.registrationStatusPill--suspended {
+  background: rgba(255, 59, 48, 0.12);
+  color: #FF3B30;
+}
+
+/* ── History button ──────────────────────────────────────────────────────── */
+
+.registrationHistoryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.55);
+  color: #4A8FF9;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.registrationHistoryBtn:hover {
+  background: rgba(74, 143, 249, 0.1);
+}
+
+/* ── Add Registration modal ──────────────────────────────────────────────── */
+
+.registrationModal {
+  width: 620px;
+  max-width: 94vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+}
+
+.registrationModalHeader {
+  padding: 24px 26px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.registrationModalTitle {
+  font-size: 20px;
+  font-weight: 900;
+  color: #1D1D1F;
+}
+
+.registrationModalSub {
+  font-size: 13px;
+  color: #86868B;
+  margin-top: 4px;
+}
+
+.registrationModalBody {
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.registrationModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 26px 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.registrationSectionTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: #4A8FF9;
+  margin-bottom: 10px;
+}
+
+.registrationFormStack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.registrationFormGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.registrationLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* ── History modal ───────────────────────────────────────────────────────── */
+
+.registrationHistoryModal {
+  width: 680px;
+  max-width: 94vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+  padding: 24px;
+}
+
+.registrationHistorySub {
+  color: #86868B;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.registrationHistoryTableWrap {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.registrationHistoryHeader,
+.registrationHistoryRow {
+  display: grid;
+  grid-template-columns: 150px 130px 130px 100px;
+  gap: 12px;
+  min-width: 540px;
+}
+
+.registrationHistoryHeader {
+  padding: 10px 0;
+  font-size: 12px;
+  color: #86868B;
+  font-weight: 800;
+}
+
+.registrationHistoryRow {
+  padding: 12px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  align-items: center;
+}
+
+/* ── Responsive polish ───────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .registrationFormGrid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .registrationModal,
+  .registrationHistoryModal {
+    width: 94vw;
+  }
+}

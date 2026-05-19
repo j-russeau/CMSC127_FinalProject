@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import PageShell from "../components/PageShell";
 import { getDashboard } from "../api/dashboard";
-import { formatMoney, formatDateTime } from "../utils";
+import { formatMoney } from "../utils";
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -81,13 +81,13 @@ export default function Dashboard() {
                   <div style={{ color: "#86868B", fontSize: 12 }}>Fine</div>
 
                   {data.recentTickets.map((t) => (
-                    <React.Fragment key={t.ticket_id}>
+                    <Fragment key={t.ticket_id}>
                       <div style={{ fontWeight: 800 }}>{t.ticket_id}</div>
                       <div>{t.driver_name || t.license_number}</div>
                       <div>{t.plate_number}</div>
                       <div>{t.issued_at}</div>
                       <div style={{ fontWeight: 900, color: "#FF3B30" }}>{formatMoney(t.total_fine)}</div>
-                    </React.Fragment>
+                    </Fragment>
                   ))}
                 </div>
               )}
@@ -107,13 +107,13 @@ export default function Dashboard() {
                   <div style={{ color: "#86868B", fontSize: 12 }}>Status</div>
 
                   {data.expiringRegistrations.map((r) => (
-                    <React.Fragment key={r.registration_number}>
+                    <Fragment key={r.registration_number}>
                       <div style={{ fontWeight: 800 }}>{r.plate_number}</div>
                       <div>{r.registration_number}</div>
                       <div>{r.registration_date}</div>
                       <div style={{ fontWeight: 800 }}>{r.expiration_date}</div>
                       <div>{r.registration_status}</div>
-                    </React.Fragment>
+                    </Fragment>
                   ))}
                 </div>
               )}

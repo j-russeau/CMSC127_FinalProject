@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listTickets, createTicketWithViolations, updateTicketStatus } from "../api/tickets";
 import { listViolations, getViolationCatalog } from "../api/violations";
 import { listVehicles } from "../api/vehicles";
@@ -33,7 +33,7 @@ function genTicketId() {
   const d = new Date();
   const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `VIO-${date}-${rand}`;
+  return `TKT-${date}-${rand}`;
 }
 
 const STATUS_LABELS = { paid: "Paid", unpaid: "Unpaid", contested: "Contested" };
@@ -339,7 +339,7 @@ export default function Violations() {
             <div className="pageSub">Track and manage traffic violation tickets</div>
           </div>
           <button className="primaryBtn" onClick={openCreateModal}>
-            <span className="plus">+</span> Create Ticket
+            <span className="plus">+</span> Add Ticket
           </button>
         </div>
 
@@ -360,7 +360,8 @@ export default function Violations() {
             <div className="tableTitle">{loadingTickets ? "Loading tickets..." : `Tickets (${filtered.length})`}</div>
           </div>
 
-          <div className="tableHeader">
+          <div className="tableScroll">
+            <div className="tableHeader">
             <div>Ticket ID</div>
             <div>Driver</div>
             <div>Vehicle</div>
@@ -416,6 +417,8 @@ export default function Violations() {
               </div>
             );
           })}
+          </div>
+          
 
           {!loadingTickets && filtered.length === 0 && <div className="emptyState">No tickets found.</div>}
         </div>
@@ -572,7 +575,7 @@ export default function Violations() {
                     <label>Ticket ID</label>
                     <input
                       className="input"
-                      placeholder="VIO-20240101-XXXX"
+                      placeholder="TKT-20240101-XXXX"
                       value={ticketForm.ticket_id}
                       onChange={(e) => setTicketForm({ ...ticketForm, ticket_id: e.target.value })}
                     />

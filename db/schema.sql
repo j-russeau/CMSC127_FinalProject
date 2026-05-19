@@ -7,7 +7,7 @@ USE lto_ims;
 -- DRIVER
 CREATE TABLE driver (
   license_number VARCHAR(20),
-  license_type VARCHAR(20) NOT NULL,  -- student permit/non-pro/pro
+  license_type VARCHAR(20) NOT NULL,  -- Student Permit / Non-Professional / Professional
   first_name VARCHAR(50) NOT NULL,
   middle_name VARCHAR(50),
   last_name VARCHAR(50) NOT NULL,
@@ -17,16 +17,24 @@ CREATE TABLE driver (
   license_expiration_date DATE NOT NULL,
   license_issuance_date DATE NOT NULL,
 
-  CONSTRAINT driver_license_number_pk PRIMARY KEY(license_number)
+  CONSTRAINT driver_license_number_pk PRIMARY KEY(license_number),
+  CONSTRAINT driver_license_type_chk CHECK (license_type IN ('Student Permit', 'Non-Professional', 'Professional')),
+  CONSTRAINT driver_sex_chk CHECK (sex IN ('M', 'F')),
+  CONSTRAINT driver_license_status_chk CHECK (license_status IN ('valid', 'expired', 'suspended', 'revoked')),
+  CONSTRAINT driver_license_dates_chk CHECK (license_expiration_date >= license_issuance_date)
 );
 
 -- DRIVER_HAS_ADDRESS
 CREATE TABLE driver_has_address (
   license_number VARCHAR(20),
-  address VARCHAR(250) NOT NULL,
+  address VARCHAR(500) NOT NULL,
 
-  CONSTRAINT driver_has_address_pk PRIMARY KEY(license_number, address), -- Composite PK to allow multiple addresses
-  CONSTRAINT driver_license_number_fk FOREIGN KEY(license_number) REFERENCES driver(license_number)
+  CONSTRAINT driver_has_address_pk PRIMARY KEY(license_number, address),
+  CONSTRAINT driver_license_number_fk
+    FOREIGN KEY(license_number)
+    REFERENCES driver(license_number)
+    ON DELETE CASCADE
+    ON UPDATE RESTRICT
 );
 
 -- VEHICLE
@@ -48,7 +56,11 @@ CREATE TABLE vehicle (
   -- so other tables can ref (plate, engine, chassis)
   CONSTRAINT vehicle_keys_uk UNIQUE(plate_number, engine_number, chassis_number),
 
-  CONSTRAINT vehicle_owner_fk FOREIGN KEY(owner_license_number) REFERENCES driver(license_number)
+  CONSTRAINT vehicle_owner_fk
+  FOREIGN KEY(owner_license_number)
+  REFERENCES driver(license_number)
+  ON DELETE RESTRICT
+  ON UPDATE RESTRICT
 );
 
 -- REGISTRATION
@@ -82,7 +94,11 @@ CREATE TABLE violation_ticket (
   chassis_number VARCHAR(30) NOT NULL,
 
   CONSTRAINT violation_ticket_pk PRIMARY KEY(ticket_id),
-  CONSTRAINT vt_driver_fk FOREIGN KEY(license_number) REFERENCES driver(license_number),
+  CONSTRAINT vt_driver_fk
+  FOREIGN KEY(license_number)
+  REFERENCES driver(license_number)
+  ON DELETE RESTRICT
+  ON UPDATE RESTRICT,
   CONSTRAINT vt_vehicle_fk FOREIGN KEY(plate_number, engine_number, chassis_number) REFERENCES vehicle(plate_number, engine_number, chassis_number)
 );
 
