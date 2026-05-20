@@ -24,8 +24,18 @@
 }
 
 .pageSidebarBrand {}
-.pageSidebarBrandTitle { font-weight: 800; color: #1D1D1F; font-size: 15px; }
-.pageSidebarBrandSub { font-size: 12px; color: #86868B; margin-top: 2px; }
+
+.pageSidebarBrandTitle {
+  font-weight: 800;
+  color: #1D1D1F;
+  font-size: 15px;
+}
+
+.pageSidebarBrandSub {
+  font-size: 12px;
+  color: #86868B;
+  margin-top: 2px;
+}
 
 .pageSidebarNav {
   display: flex;
@@ -44,15 +54,26 @@
   font-weight: 600;
   font-size: 14px;
   text-decoration: none;
-  transition: background 0.12s;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
 }
-.pageSidebarNavItem:hover { background: rgba(0, 0, 0, 0.04); }
+
+.pageSidebarNavItem:hover {
+  background: rgba(0, 0, 0, 0.04);
+  transform: translateX(2px);
+}
+
 .pageSidebarNavItemActive {
   background: rgba(74, 143, 249, 0.12);
   color: #4A8FF9;
   font-weight: 700;
 }
-.pageSidebarNavChevron { font-size: 16px; }
+
+.pageSidebarNavChevron {
+  font-size: 16px;
+}
 
 .pageSidebarFooter {
   margin-top: auto;
@@ -61,6 +82,7 @@
   gap: 10px;
   padding-top: 8px;
 }
+
 .pageSidebarAvatar {
   width: 34px;
   height: 34px;
@@ -72,8 +94,17 @@
   font-weight: 800;
   flex-shrink: 0;
 }
-.pageSidebarUserName { font-size: 13px; font-weight: 700; color: #1D1D1F; }
-.pageSidebarUserRole { font-size: 12px; color: #86868B; }
+
+.pageSidebarUserName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D1D1F;
+}
+
+.pageSidebarUserRole {
+  font-size: 12px;
+  color: #86868B;
+}
 
 /* Main content area */
 .pageMain {
@@ -81,9 +112,66 @@
   min-width: 0;
   height: 100%;
   overflow-y: auto;
+  padding: 18px;
+  box-sizing: border-box;
+}
+
+/* Route/page transition wrapper */
+.pageTransition {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 18px;
-  box-sizing: border-box;
+  animation: pageFadeUp 220ms ease-out both;
+}
+
+/*
+ * Each direct section inside a page fades up slightly after route change.
+ * This makes title/search/table feel like one coherent page instead of
+ * abruptly replacing the previous tab.
+ */
+.pageTransition > * {
+  animation: pageSectionFadeUp 260ms ease-out both;
+}
+
+.pageTransition > *:nth-child(1) { animation-delay: 0ms; }
+.pageTransition > *:nth-child(2) { animation-delay: 35ms; }
+.pageTransition > *:nth-child(3) { animation-delay: 70ms; }
+.pageTransition > *:nth-child(4) { animation-delay: 105ms; }
+.pageTransition > *:nth-child(5) { animation-delay: 140ms; }
+.pageTransition > *:nth-child(n + 6) { animation-delay: 160ms; }
+
+@keyframes pageFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageSectionFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .pageTransition,
+  .pageTransition > *,
+  .pageSidebarNavItem {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }

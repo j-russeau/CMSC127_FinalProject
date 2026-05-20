@@ -67,8 +67,12 @@ export default function PageShell({ children }) {
       </aside>
 
       {/* ── Main Content Area ────────────────────────────────────── */}
-      {/* flex column with gap — each direct child becomes a stacked card/section */}
-      <main className="pageMain">{children}</main>
+      {/* Sidebar stays stable; only this route-specific content animates. */}
+      <main className="pageMain">
+        <div key={location.pathname} className="pageTransition">
+          {children}
+        </div>
+      </main>
 
     </div>
   );
