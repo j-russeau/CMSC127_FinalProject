@@ -1,0 +1,460 @@
+.dashboardPage,
+.dashboardPage * {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.dashboardPage {
+  position: relative;
+  min-height: calc(100vh - 36px);
+  margin: -18px;
+  padding: 18px;
+  overflow: hidden;
+  border-radius: 22px;
+  color: #fff;
+  isolation: isolate;
+}
+
+.dashboardBg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(74, 143, 249, 0.34), transparent 32%),
+    radial-gradient(circle at 86% 6%, rgba(20, 184, 255, 0.18), transparent 30%),
+    linear-gradient(
+      135deg,
+      #061636 0%,
+      #0B2454 38%,
+      #123A7A 66%,
+      #07172F 100%
+    );
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dashboardBg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 10, 28, 0.08);
+  pointer-events: none;
+}
+
+.dashboardContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+}
+
+.dashboardTopBar {
+  color: #fff;
+}
+
+.dashboardDateText {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.dashboardTimeText {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.dashboardAvatar {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.dashboardHero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 4px 2px 2px;
+}
+
+.dashboardEyebrow {
+  color: rgba(190, 220, 255, 0.95);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.dashboardTitle {
+  margin: 0;
+  color: #fff;
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.dashboardSub {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.dashboardRefreshBtn {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 900;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    border-color 0.14s ease;
+}
+
+.dashboardRefreshBtn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.dashboardRefreshBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dashboardMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboardMetric {
+  position: relative;
+  overflow: hidden;
+  min-height: 104px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(10, 35, 82, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dashboardMetric::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  top: -32px;
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.dashboardMetric--blue::after {
+  background: #4A8FF9;
+}
+
+.dashboardMetric--green::after {
+  background: #34C759;
+}
+
+.dashboardMetric--red::after {
+  background: #FF3B30;
+}
+
+.dashboardMetric--orange::after {
+  background: #FF9500;
+}
+
+.dashboardMetricIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 21px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboardMetricLabel {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dashboardMetricValue {
+  color: #fff;
+  font-size: 31px;
+  font-weight: 900;
+  line-height: 1.05;
+  margin-top: 4px;
+  letter-spacing: -0.04em;
+}
+
+.dashboardMetricNote {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.dashboardPanel {
+  background: rgba(9, 31, 73, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.dashboardPanelLarge {
+  min-height: 240px;
+}
+
+.dashboardPanelHeader {
+  padding: 18px 20px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboardPanelTitle {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dashboardPanelSub {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.dashboardPanelCount {
+  min-width: 34px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.dashboardTable {
+  width: 100%;
+}
+
+.dashboardTableHead,
+.dashboardTableRow {
+  display: grid;
+  align-items: center;
+  column-gap: 14px;
+}
+
+.dashboardTicketsTable .dashboardTableHead,
+.dashboardTicketsTable .dashboardTableRow {
+  grid-template-columns: minmax(145px, 0.9fr) minmax(180px, 1.15fr) minmax(100px, 0.65fr) minmax(230px, 1.35fr) minmax(100px, 0.65fr);
+}
+
+.dashboardRegistrationsTable .dashboardTableHead,
+.dashboardRegistrationsTable .dashboardTableRow {
+  grid-template-columns: minmax(100px, 0.7fr) minmax(190px, 1.3fr) minmax(130px, 0.85fr) minmax(130px, 0.85fr) minmax(110px, 0.65fr);
+}
+
+.dashboardTableHead {
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.dashboardTableRow {
+  padding: 14px 20px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboardTableRow:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.dashboardStrong {
+  color: #fff;
+  font-weight: 900;
+}
+
+.dashboardMuted {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.dashboardMono {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.dashboardStack {
+  min-width: 0;
+}
+
+.dashboardPlate {
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.dashboardLocation {
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.35;
+}
+
+.dashboardFine {
+  color: #FFD1D1;
+  font-weight: 900;
+}
+
+.dashboardExpiry {
+  color: #fff;
+  font-weight: 900;
+}
+
+.dashboardStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: capitalize;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.dashboardStatus--active,
+.dashboardStatus--paid {
+  background: rgba(52, 199, 89, 0.22);
+  color: #C9FFD9;
+}
+
+.dashboardStatus--expired,
+.dashboardStatus--unpaid {
+  background: rgba(255, 59, 48, 0.22);
+  color: #FFD1D1;
+}
+
+.dashboardStatus--suspended,
+.dashboardStatus--contested {
+  background: rgba(255, 149, 0, 0.24);
+  color: #FFE5B8;
+}
+
+.dashboardEmpty {
+  padding: 28px 20px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 14px;
+}
+
+.dashboardErrorCard {
+  background: rgba(255, 59, 48, 0.16);
+  border: 1px solid rgba(255, 59, 48, 0.28);
+  border-radius: 22px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboardErrorTitle {
+  color: #fff;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.dashboardErrorText {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.dashboardPanelLoading {
+  padding: 24px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.dashboardSkeleton {
+  height: 104px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 1100px) {
+  .dashboardMetricsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboardTicketsTable,
+  .dashboardRegistrationsTable {
+    overflow-x: auto;
+  }
+
+  .dashboardTicketsTable .dashboardTableHead,
+  .dashboardTicketsTable .dashboardTableRow {
+    min-width: 920px;
+  }
+
+  .dashboardRegistrationsTable .dashboardTableHead,
+  .dashboardRegistrationsTable .dashboardTableRow {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboardHero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboardMetricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardTitle {
+    font-size: 30px;
+  }
+}

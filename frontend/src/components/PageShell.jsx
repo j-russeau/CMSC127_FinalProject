@@ -29,8 +29,8 @@ export default function PageShell({ children }) {
 
         {/* Brand / logo area */}
         <div className="pageSidebarBrand">
-          <div className="pageSidebarBrandTitle">LTO IMS</div>
-          <div className="pageSidebarBrandSub">Information Management</div>
+          <div className="pageSidebarBrandTitle">Land Transportation Office</div>
+          <div className="pageSidebarBrandSub">Information Management System</div>
         </div>
 
         {/* Navigation links — active item is highlighted based on current path */}
@@ -67,8 +67,12 @@ export default function PageShell({ children }) {
       </aside>
 
       {/* ── Main Content Area ────────────────────────────────────── */}
-      {/* flex column with gap — each direct child becomes a stacked card/section */}
-      <main className="pageMain">{children}</main>
+      {/* Sidebar stays stable; only this route-specific content animates. */}
+      <main className="pageMain">
+        <div key={location.pathname} className="pageTransition">
+          {children}
+        </div>
+      </main>
 
     </div>
   );
