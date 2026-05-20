@@ -12,6 +12,15 @@ import SearchInput from "../components/SearchInput";
 const VEHICLE_TYPES = ["Sedan", "SUV", "Pickup Truck", "Van", "Motorcycle", "Bus", "Truck"];
 const MAX_YEAR = new Date().getFullYear() + 1;
 
+const VEHICLE_SORT_OPTIONS = [
+  { value: "plate_asc", label: "Plate A-Z" },
+  { value: "owner_asc", label: "Owner A-Z" },
+  { value: "type_asc", label: "Type A-Z" },
+  { value: "make_asc", label: "Make / model A-Z" },
+  { value: "year_desc", label: "Year newest" },
+  { value: "year_asc", label: "Year oldest" },
+];
+
 /* ── Small reusable components ── */
 
 /*
@@ -70,6 +79,7 @@ const emptyForm = {
 
 export default function Vehicles() {
   const [query, setQuery]         = useState("");
+  const [sortBy, setSortBy]       = useState("plate_asc");
   const [vehicles, setVehicles]   = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [driversErr, setDriversErr] = useState("");
@@ -132,15 +142,27 @@ export default function Vehicles() {
   /* Client-side search — useMemo avoids re-filtering on unrelated state changes. */
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return vehicles;
-    return vehicles.filter((v) => {
-      const hay = [
-        v.plate_number, fullName(v), v.owner_license_number,
-        v.make, v.model, v.vehicle_type, v.color,
-      ].filter(Boolean).join(" ").toLowerCase();
-      return hay.includes(q);
+    const rows = q
+      ? vehicles.filter((v) => {
+          const hay = [
+            v.plate_number, fullName(v), v.owner_license_number,
+            v.make, v.model, v.vehicle_type, v.color,
+          ].filter(Boolean).join(" ").toLowerCase();
+          return hay.includes(q);
+        })
+      : [...vehicles];
+
+    rows.sort((a, b) => {
+      if (sortBy === "owner_asc") return fullName(a).localeCompare(fullName(b));
+      if (sortBy === "type_asc") return String(a.vehicle_type).localeCompare(String(b.vehicle_type));
+      if (sortBy === "make_asc") return `${a.make || ""} ${a.model || ""}`.localeCompare(`${b.make || ""} ${b.model || ""}`);
+      if (sortBy === "year_desc") return Number(b.year || 0) - Number(a.year || 0);
+      if (sortBy === "year_asc") return Number(a.year || 0) - Number(b.year || 0);
+      return String(a.plate_number).localeCompare(String(b.plate_number));
     });
-  }, [vehicles, query]);
+
+    return rows;
+  }, [vehicles, query, sortBy]);
 
   function openAdd() {
     setForm(emptyForm);
@@ -428,6 +450,19 @@ export default function Vehicles() {
         <div className="tableTitleRow">
           <div className="tableTitle">
             {loading ? "Loading..." : `Vehicles (${filtered.length})`}
+          </div>
+          <div className="tableTools">
+            <label className="tableToolLabel" htmlFor="vehicles-sort">Sort by</label>
+            <select
+              id="vehicles-sort"
+              className="input tableSortSelect"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              {VEHICLE_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 

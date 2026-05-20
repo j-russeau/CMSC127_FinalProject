@@ -40,6 +40,16 @@ function genTicketId() {
 
 const STATUS_LABELS = { paid: "Paid", unpaid: "Unpaid", contested: "Contested" };
 
+const VIOLATION_SORT_OPTIONS = [
+  { value: "datetime_desc", label: "Date newest" },
+  { value: "datetime_asc", label: "Date oldest" },
+  { value: "ticket_asc", label: "Ticket ID A-Z" },
+  { value: "driver_asc", label: "Driver A-Z" },
+  { value: "plate_asc", label: "Plate A-Z" },
+  { value: "fine_desc", label: "Fine high-low" },
+  { value: "status_asc", label: "Status A-Z" },
+];
+
 const ALLOWED_STATUS_TRANSITIONS = {
   unpaid: ["paid", "contested"],
   contested: ["paid", "unpaid"],
@@ -114,6 +124,7 @@ export default function Violations() {
   }, []);
 
   const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState("datetime_desc");
   const [tickets, setTickets] = useState([]);
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [apiErr, setApiErr] = useState("");
@@ -248,15 +259,28 @@ export default function Violations() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return tickets;
-    return tickets.filter((t) => {
-      const hay = [t.ticket_id, t.driver_name, t.driver_license, t.plate_number, t.vehicle_label, t.issued_at, t.violation_status]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
+    const rows = q
+      ? tickets.filter((t) => {
+          const hay = [t.ticket_id, t.driver_name, t.driver_license, t.plate_number, t.vehicle_label, t.issued_at, t.violation_status]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          return hay.includes(q);
+        })
+      : [...tickets];
+
+    rows.sort((a, b) => {
+      if (sortBy === "datetime_asc") return new Date(a.datetime) - new Date(b.datetime);
+      if (sortBy === "ticket_asc") return String(a.ticket_id).localeCompare(String(b.ticket_id));
+      if (sortBy === "driver_asc") return String(a.driver_name).localeCompare(String(b.driver_name));
+      if (sortBy === "plate_asc") return String(a.plate_number).localeCompare(String(b.plate_number));
+      if (sortBy === "fine_desc") return Number(b.total_fine || 0) - Number(a.total_fine || 0);
+      if (sortBy === "status_asc") return String(a.violation_status).localeCompare(String(b.violation_status));
+      return new Date(b.datetime) - new Date(a.datetime);
     });
-  }, [tickets, query]);
+
+    return rows;
+  }, [tickets, query, sortBy]);
 
   const selectedTicket = useMemo(
     () => tickets.find((t) => t.ticket_id === selectedTicketId) || null,
@@ -511,6 +535,19 @@ export default function Violations() {
         <div className="card tableCard">
           <div className="tableTitleRow">
             <div className="tableTitle">{loadingTickets ? "Loading tickets..." : `Tickets (${filtered.length})`}</div>
+            <div className="tableTools">
+              <label className="tableToolLabel" htmlFor="violations-sort">Sort by</label>
+              <select
+                id="violations-sort"
+                className="input tableSortSelect"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                {VIOLATION_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="tableScroll">

@@ -10,6 +10,15 @@ import SearchInput from "../components/SearchInput";
 const LICENSE_TYPES = ["Student Permit", "Non-Professional", "Professional"];
 const LICENSE_STATUSES = ["valid", "expired", "suspended", "revoked"];
 
+const DRIVER_SORT_OPTIONS = [
+  { value: "name_asc", label: "Name A-Z" },
+  { value: "name_desc", label: "Name Z-A" },
+  { value: "license_asc", label: "License A-Z" },
+  { value: "status_asc", label: "Status A-Z" },
+  { value: "age_asc", label: "Age low-high" },
+  { value: "age_desc", label: "Age high-low" },
+];
+
 /* ── Small reusable components ── */
 
 function StatusPill({ status }) {
@@ -293,6 +302,7 @@ function DriverSummaryModal({ driver, onClose }) {
 
 export default function Drivers() {
   const [query, setQuery]     = useState("");
+  const [sortBy, setSortBy]   = useState("name_asc");
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiErr, setApiErr]   = useState("");
@@ -341,13 +351,25 @@ export default function Drivers() {
   /* Client-side search filter — useMemo avoids re-filtering on unrelated renders. */
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return drivers;
-    return drivers.filter((d) => {
-      const hay = [d.license_number, fullName(d), d.license_type, d.license_status]
-        .filter(Boolean).join(" ").toLowerCase();
-      return hay.includes(q);
+    const rows = q
+      ? drivers.filter((d) => {
+          const hay = [d.license_number, fullName(d), d.license_type, d.license_status]
+            .filter(Boolean).join(" ").toLowerCase();
+          return hay.includes(q);
+        })
+      : [...drivers];
+
+    rows.sort((a, b) => {
+      if (sortBy === "name_desc") return fullName(b).localeCompare(fullName(a));
+      if (sortBy === "license_asc") return String(a.license_number).localeCompare(String(b.license_number));
+      if (sortBy === "status_asc") return String(a.license_status).localeCompare(String(b.license_status));
+      if (sortBy === "age_asc") return computeAge(a.date_of_birth) - computeAge(b.date_of_birth);
+      if (sortBy === "age_desc") return computeAge(b.date_of_birth) - computeAge(a.date_of_birth);
+      return fullName(a).localeCompare(fullName(b));
     });
-  }, [drivers, query]);
+
+    return rows;
+  }, [drivers, query, sortBy]);
 
   function openAdd() {
     setForm(emptyForm);
@@ -532,6 +554,19 @@ export default function Drivers() {
         <div className="tableTitleRow">
           <div className="tableTitle">
             {loading ? "Loading..." : `Drivers (${filtered.length})`}
+          </div>
+          <div className="tableTools">
+            <label className="tableToolLabel" htmlFor="drivers-sort">Sort by</label>
+            <select
+              id="drivers-sort"
+              className="input tableSortSelect"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              {DRIVER_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div className="tableScroll"><div className="driversTableHeader">

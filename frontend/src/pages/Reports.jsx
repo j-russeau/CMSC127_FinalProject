@@ -120,9 +120,71 @@ function formatCell(value) {
   return s;
 }
 
+function compareReportValues(a, b) {
+  if (a === null || a === undefined || a === "") return 1;
+  if (b === null || b === undefined || b === "") return -1;
+
+  const aNum = Number(a);
+  const bNum = Number(b);
+
+  if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
+    return aNum - bNum;
+  }
+
+  return String(a).localeCompare(String(b));
+}
+
+function sortReportRows(rows, sortBy) {
+  if (!sortBy) return rows || [];
+
+  const [column, direction] = sortBy.split("::");
+  const sorted = [...(rows || [])];
+
+  sorted.sort((a, b) => {
+    const result = compareReportValues(a[column], b[column]);
+    return direction === "desc" ? -result : result;
+  });
+
+  return sorted;
+}
+
+function csvValue(value) {
+  if (value === null || value === undefined) return "";
+
+  const s = String(value);
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function buildCsv(rows) {
+  if (!rows || rows.length === 0) return "";
+
+  const columns = Object.keys(rows[0]);
+  const header = columns.map(csvValue).join(",");
+  const body = rows.map((row) => columns.map((c) => csvValue(formatCell(row[c]))).join(",")).join("\n");
+
+  return `${header}\n${body}`;
+}
+
+function downloadCsv(filename, rows) {
+  const csv = buildCsv(rows);
+  if (!csv) return;
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ── Small UI Components ──────────────────────────────────────────────────────
 
-function ReportTable({ rows }) {
+function ReportTable({ rows, sortBy }) {
   if (!rows) return null;
 
   if (!rows.length) {
@@ -130,6 +192,7 @@ function ReportTable({ rows }) {
   }
 
   const columns = Object.keys(rows[0]);
+  const sortedRows = sortReportRows(rows, sortBy);
 
   return (
     <div className="reportsTableScroll">
@@ -143,7 +206,7 @@ function ReportTable({ rows }) {
         </thead>
 
         <tbody>
-          {rows.map((row, idx) => (
+          {sortedRows.map((row, idx) => (
             <tr key={idx}>
               {columns.map((c) => (
                 <td key={c}>{formatCell(row[c])}</td>
@@ -202,6 +265,7 @@ export default function Reports() {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(false);
   const [showSql, setShowSql] = useState(false);
+  const [reportSortBy, setReportSortBy] = useState("");
 
   const { toasts, toast, dismiss } = useToast();
 
@@ -211,6 +275,9 @@ export default function Reports() {
   );
 
   const activeResult = results[selectedReport];
+  const activeResultRows = activeResult?.data || [];
+  const activeResultColumns = activeResultRows.length > 0 ? Object.keys(activeResultRows[0]) : [];
+  const sortedActiveResultRows = sortReportRows(activeResultRows, reportSortBy);
 
   // ── Form Helpers ───────────────────────────────────────────────────────────
 
@@ -566,7 +633,10 @@ export default function Reports() {
             return (
               <button
                 key={report.id}
-                onClick={() => setSelectedReport(report.id)}
+                onClick={() => {
+                  setSelectedReport(report.id);
+                  setReportSortBy("");
+                }}
                 className={`reportsReportCard${active ? " active" : ""}`}
               >
                 <div className="reportsReportCardInner">
@@ -599,6 +669,14 @@ export default function Reports() {
           <button className="primaryBtn" onClick={runReport} disabled={loading}>
             {loading ? "Generating..." : "Generate Report"}
           </button>
+
+          <button
+            className="secondaryBtn"
+            onClick={() => downloadCsv(`${activeReport.title.replace(/\s+/g, "-").toLowerCase()}.csv`, sortedActiveResultRows)}
+            disabled={activeResultRows.length === 0}
+          >
+            Export CSV
+          </button>
         </div>
 
         {activeResult?.error && (
@@ -609,7 +687,31 @@ export default function Reports() {
 
         {activeResult && (
           <div className="reportsResultArea">
-            <ReportTable rows={activeResult.data || []} />
+            {activeResultRows.length > 0 && (
+              <div className="reportsResultTools">
+                <label className="tableToolLabel" htmlFor="reports-sort">Sort by</label>
+                <select
+                  id="reports-sort"
+                  className="input tableSortSelect"
+                  value={reportSortBy}
+                  onChange={(e) => setReportSortBy(e.target.value)}
+                >
+                  <option value="">Original order</option>
+                  {activeResultColumns.map((column) => (
+                    <option key={`${column}-asc`} value={`${column}::asc`}>
+                      {labelForKey(column)} A-Z / low-high
+                    </option>
+                  ))}
+                  {activeResultColumns.map((column) => (
+                    <option key={`${column}-desc`} value={`${column}::desc`}>
+                      {labelForKey(column)} Z-A / high-low
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <ReportTable rows={activeResultRows} sortBy={reportSortBy} />
           </div>
         )}
 

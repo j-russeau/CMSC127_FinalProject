@@ -125,6 +125,15 @@
   margin-top: 18px;
 }
 
+.reportsResultTools {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
 /* Forms */
 .reportsFormGrid {
   display: grid;
