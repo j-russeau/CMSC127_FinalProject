@@ -64,6 +64,28 @@
 .tableTitleRow { padding: 14px; display: flex; align-items: center; gap: 12px; }
 .tableTitle { font-size: 13px; font-weight: 700; color: #1D1D1F; }
 
+/* ── Table tools ── */
+.tableTools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tableToolLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #86868B;
+  white-space: nowrap;
+}
+.tableSortSelect {
+  width: auto;
+  min-width: 190px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+
 /* ── Buttons ── */
 .primaryBtn {
   display: inline-flex;

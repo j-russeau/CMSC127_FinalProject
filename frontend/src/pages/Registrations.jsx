@@ -19,6 +19,15 @@ import "./Registrations.css";
 // Valid values based on the database/project specification
 const REGISTRATION_STATUSES = ["active", "expired", "suspended"];
 
+const REGISTRATION_SORT_OPTIONS = [
+  { value: "registration_desc", label: "Registration newest" },
+  { value: "registration_asc", label: "Registration oldest" },
+  { value: "expiration_asc", label: "Expiration soonest" },
+  { value: "expiration_desc", label: "Expiration latest" },
+  { value: "plate_asc", label: "Plate A-Z" },
+  { value: "status_asc", label: "Status A-Z" },
+];
+
 // ── Date / Formatting Helpers ────────────────────────────────────────────────
 
 function todayIso() {
@@ -138,6 +147,7 @@ export default function Registrations() {
 
   // Page state
   const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState("registration_desc");
   const [loading, setLoading] = useState(true);
   const [apiErr, setApiErr] = useState("");
   const [showSql, setShowSql] = useState(false);
@@ -199,27 +209,38 @@ export default function Registrations() {
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    if (!q) return latestRows;
+    const rows = q
+      ? latestRows.filter((r) => {
+          const v = r.vehicle || {};
+          const hay = [
+            r.registration_number,
+            r.plate_number,
+            r.registration_status,
+            r.registration_date,
+            r.expiration_date,
+            vehicleName(v),
+            driverName(v),
+            v.owner_license_number,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
 
-    return latestRows.filter((r) => {
-      const v = r.vehicle || {};
-      const hay = [
-        r.registration_number,
-        r.plate_number,
-        r.registration_status,
-        r.registration_date,
-        r.expiration_date,
-        vehicleName(v),
-        driverName(v),
-        v.owner_license_number,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+          return hay.includes(q);
+        })
+      : [...latestRows];
 
-      return hay.includes(q);
+    rows.sort((a, b) => {
+      if (sortBy === "registration_asc") return new Date(a.registration_date) - new Date(b.registration_date);
+      if (sortBy === "expiration_asc") return new Date(a.expiration_date) - new Date(b.expiration_date);
+      if (sortBy === "expiration_desc") return new Date(b.expiration_date) - new Date(a.expiration_date);
+      if (sortBy === "plate_asc") return String(a.plate_number).localeCompare(String(b.plate_number));
+      if (sortBy === "status_asc") return String(a.registration_status).localeCompare(String(b.registration_status));
+      return new Date(b.registration_date) - new Date(a.registration_date);
     });
-  }, [latestRows, query]);
+
+    return rows;
+  }, [latestRows, query, sortBy]);
 
   // ── Data Loading ───────────────────────────────────────────────────────────
 
@@ -487,6 +508,19 @@ export default function Registrations() {
             <div className="registrationTableSubtitle">
               Latest registration record per vehicle
             </div>
+          </div>
+          <div className="tableTools">
+            <label className="tableToolLabel" htmlFor="registrations-sort">Sort by</label>
+            <select
+              id="registrations-sort"
+              className="input tableSortSelect"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              {REGISTRATION_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 
