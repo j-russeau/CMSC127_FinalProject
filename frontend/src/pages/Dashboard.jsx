@@ -1,4 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  FaCalendarAlt,
+  FaCarSide,
+  FaExclamationTriangle,
+  FaFileAlt,
+  FaSyncAlt,
+  FaTicketAlt,
+  FaUsers,
+} from "react-icons/fa";
 import PageShell from "../components/PageShell";
 import { getDashboard } from "../api/dashboard";
 import { formatMoney } from "../utils";
@@ -10,7 +19,6 @@ function formatDashboardDate(value) {
   if (!value) return "—";
 
   const raw = String(value);
-
   let date;
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
@@ -101,6 +109,7 @@ function MetricCard({ label, value, icon, tone, note }) {
   return (
     <div className={`dashboardMetric dashboardMetric--${tone}`}>
       <div className="dashboardMetricIcon">{icon}</div>
+
       <div>
         <div className="dashboardMetricLabel">{label}</div>
         <div className="dashboardMetricValue">{value ?? 0}</div>
@@ -166,230 +175,236 @@ export default function Dashboard() {
   return (
     <PageShell>
       <div className="dashboardPage">
-        <div className="topBar">
-          <div className="topRight">
-            <div className="dateTime">
-              <div className="dateText">{dateStr}</div>
-              <div className="timeText">{timeStr}</div>
-            </div>
+        <div className="dashboardBg" />
 
-            <div className="avatar">A</div>
-          </div>
-        </div>
+        <div className="dashboardContent">
+          <div className="topBar dashboardTopBar">
+            <div className="topRight">
+              <div className="dateTime dashboardDateTime">
+                <div className="dateText dashboardDateText">{dateStr}</div>
+                <div className="timeText dashboardTimeText">{timeStr}</div>
+              </div>
 
-        <div className="dashboardHero">
-          <div>
-            <div className="dashboardEyebrow">LTO Information Management</div>
-            <h1 className="dashboardTitle">Dashboard</h1>
-            <div className="dashboardSub">
-              Overview of drivers, vehicles, registrations, and violation tickets
+              <div className="avatar dashboardAvatar">A</div>
             </div>
           </div>
 
-          <button className="dashboardRefreshBtn" onClick={load} disabled={loading}>
-            {loading ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-
-        {err ? (
-          <div className="dashboardErrorCard">
+          <div className="dashboardHero">
             <div>
-              <div className="dashboardErrorTitle">Could not load dashboard</div>
-              <div className="dashboardErrorText">{err}</div>
+              <div className="dashboardEyebrow">LTO Information Management</div>
+              <h1 className="dashboardTitle">Dashboard</h1>
+              <div className="dashboardSub">
+                Overview of drivers, vehicles, registrations, and violation tickets
+              </div>
             </div>
 
-            <button className="primaryBtn" onClick={load}>
-              Retry
+            <button className="dashboardRefreshBtn" onClick={load} disabled={loading}>
+              <FaSyncAlt />
+              {loading ? "Refreshing..." : "Refresh"}
             </button>
           </div>
-        ) : null}
 
-        {loading ? (
-          <>
-            <div className="dashboardMetricsGrid">
-              <div className="dashboardSkeleton" />
-              <div className="dashboardSkeleton" />
-              <div className="dashboardSkeleton" />
-              <div className="dashboardSkeleton" />
+          {err ? (
+            <div className="dashboardErrorCard">
+              <div>
+                <div className="dashboardErrorTitle">Could not load dashboard</div>
+                <div className="dashboardErrorText">{err}</div>
+              </div>
+
+              <button className="primaryBtn" onClick={load}>
+                Retry
+              </button>
             </div>
+          ) : null}
 
-            <div className="dashboardPanel dashboardPanelLoading">
-              Loading dashboard...
-            </div>
-          </>
-        ) : data ? (
-          <>
-            <div className="dashboardMetricsGrid">
-              <MetricCard
-                label="Total Drivers"
-                value={metrics.total_drivers}
-                icon="👤"
-                tone="blue"
-                note="Registered license holders"
-              />
+          {loading ? (
+            <>
+              <div className="dashboardMetricsGrid">
+                <div className="dashboardSkeleton" />
+                <div className="dashboardSkeleton" />
+                <div className="dashboardSkeleton" />
+                <div className="dashboardSkeleton" />
+              </div>
 
-              <MetricCard
-                label="Total Vehicles"
-                value={metrics.total_vehicles}
-                icon="🚗"
-                tone="green"
-                note="Vehicles in the system"
-              />
+              <div className="dashboardPanel dashboardPanelLoading">
+                Loading dashboard...
+              </div>
+            </>
+          ) : data ? (
+            <>
+              <div className="dashboardMetricsGrid">
+                <MetricCard
+                  label="Total Drivers"
+                  value={metrics.total_drivers}
+                  icon={<FaUsers />}
+                  tone="blue"
+                  note="Registered license holders"
+                />
 
-              <MetricCard
-                label="Unpaid Tickets"
-                value={metrics.unpaid_tickets}
-                icon="⚠️"
-                tone="red"
-                note="Needs settlement"
-              />
+                <MetricCard
+                  label="Total Vehicles"
+                  value={metrics.total_vehicles}
+                  icon={<FaCarSide />}
+                  tone="green"
+                  note="Vehicles in the system"
+                />
 
-              <MetricCard
-                label="Expired Registrations"
-                value={metrics.expired_registrations}
-                icon="📄"
-                tone="orange"
-                note="Requires renewal"
-              />
-            </div>
+                <MetricCard
+                  label="Unpaid Tickets"
+                  value={metrics.unpaid_tickets}
+                  icon={<FaExclamationTriangle />}
+                  tone="red"
+                  note="Needs settlement"
+                />
 
-            <div className="dashboardGrid">
-              <section className="dashboardPanel dashboardPanelLarge">
-                <div className="dashboardPanelHeader">
-                  <div>
-                    <div className="dashboardPanelTitle">Recent Tickets</div>
-                    <div className="dashboardPanelSub">
-                      Latest violation tickets recorded in the system
-                    </div>
-                  </div>
+                <MetricCard
+                  label="Expired Registrations"
+                  value={metrics.expired_registrations}
+                  icon={<FaFileAlt />}
+                  tone="orange"
+                  note="Requires renewal"
+                />
+              </div>
 
-                  <div className="dashboardPanelCount">
-                    {recentTickets.length}
-                  </div>
-                </div>
-
-                {recentTickets.length === 0 ? (
-                  <div className="dashboardEmpty">
-                    No tickets yet.
-                  </div>
-                ) : (
-                  <div className="dashboardTable dashboardTicketsTable">
-                    <div className="dashboardTableHead">
-                      <div>Ticket</div>
-                      <div>Driver</div>
-                      <div>Plate</div>
-                      <div>Location</div>
-                      <div>Fine</div>
-                    </div>
-
-                    {recentTickets.map((t) => (
-                      <div className="dashboardTableRow" key={t.ticket_id}>
-                        <div className="dashboardMono dashboardStrong">
-                          {t.ticket_id}
-                        </div>
-
-                        <div className="dashboardStack">
-                          <div className="dashboardStrong">
-                            {t.driver_name || t.license_number || "—"}
-                          </div>
-                          <div className="dashboardMuted">
-                            {t.license_number || "—"}
-                          </div>
-                        </div>
-
-                        <div className="dashboardPlate">
-                          {t.plate_number || "—"}
-                        </div>
-
-                        <div className="dashboardLocation">
-                          {formatTicketLocation(t.issued_at)}
-                        </div>
-
-                        <div className="dashboardFine">
-                          {formatMoney(t.total_fine || 0)}
-                        </div>
+              <div className="dashboardGrid">
+                <section className="dashboardPanel dashboardPanelLarge">
+                  <div className="dashboardPanelHeader">
+                    <div>
+                      <div className="dashboardPanelTitle">
+                        <FaTicketAlt />
+                        Recent Tickets
                       </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              <section className="dashboardPanel dashboardPanelLarge">
-                <div className="dashboardPanelHeader">
-                  <div>
-                    <div className="dashboardPanelTitle">
-                      Registrations Expiring Soon
+                      <div className="dashboardPanelSub">
+                        Latest violation tickets recorded in the system
+                      </div>
                     </div>
-                    <div className="dashboardPanelSub">
-                      Active registrations expiring within 30 days
+
+                    <div className="dashboardPanelCount">
+                      {recentTickets.length}
                     </div>
                   </div>
 
-                  <div className="dashboardPanelCount">
-                    {expiringRegistrations.length}
-                  </div>
-                </div>
+                  {recentTickets.length === 0 ? (
+                    <div className="dashboardEmpty">No tickets yet.</div>
+                  ) : (
+                    <div className="dashboardTable dashboardTicketsTable">
+                      <div className="dashboardTableHead">
+                        <div>Ticket</div>
+                        <div>Driver</div>
+                        <div>Plate</div>
+                        <div>Location</div>
+                        <div>Fine</div>
+                      </div>
 
-                {expiringRegistrations.length === 0 ? (
-                  <div className="dashboardEmpty">
-                    No upcoming expirations.
-                  </div>
-                ) : (
-                  <div className="dashboardTable dashboardRegistrationsTable">
-                    <div className="dashboardTableHead">
-                      <div>Plate</div>
-                      <div>Registration #</div>
-                      <div>Reg Date</div>
-                      <div>Expiry</div>
-                      <div>Status</div>
-                    </div>
-
-                    {expiringRegistrations.map((r) => {
-                      const left = daysUntil(r.expiration_date);
-
-                      return (
-                        <div className="dashboardTableRow" key={r.registration_number}>
-                          <div className="dashboardPlate">
-                            {r.plate_number || "—"}
+                      {recentTickets.map((t) => (
+                        <div className="dashboardTableRow" key={t.ticket_id}>
+                          <div className="dashboardMono dashboardStrong">
+                            {t.ticket_id}
                           </div>
 
                           <div className="dashboardStack">
-                            <div className="dashboardMono dashboardStrong">
-                              {r.registration_number || "—"}
+                            <div className="dashboardStrong">
+                              {t.driver_name || t.license_number || "—"}
                             </div>
-                            {left !== null ? (
-                              <div className="dashboardMuted">
-                                {left < 0
-                                  ? `${Math.abs(left)} day${Math.abs(left) === 1 ? "" : "s"} overdue`
-                                  : left === 0
-                                    ? "Expires today"
-                                    : `${left} day${left === 1 ? "" : "s"} left`}
-                              </div>
-                            ) : null}
+                            <div className="dashboardMuted">
+                              {t.license_number || "—"}
+                            </div>
                           </div>
 
-                          <div>
-                            {formatDashboardDate(r.registration_date)}
+                          <div className="dashboardPlate">
+                            {t.plate_number || "—"}
                           </div>
 
-                          <div className="dashboardExpiry">
-                            {formatDashboardDate(r.expiration_date)}
+                          <div className="dashboardLocation">
+                            {formatTicketLocation(t.issued_at)}
                           </div>
 
-                          <div>
-                            <span className={statusClass(r.registration_status)}>
-                              {r.registration_status || "—"}
-                            </span>
+                          <div className="dashboardFine">
+                            {formatMoney(t.total_fine || 0)}
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <section className="dashboardPanel dashboardPanelLarge">
+                  <div className="dashboardPanelHeader">
+                    <div>
+                      <div className="dashboardPanelTitle">
+                        <FaCalendarAlt />
+                        Registrations Expiring Soon
+                      </div>
+                      <div className="dashboardPanelSub">
+                        Active registrations expiring within 30 days
+                      </div>
+                    </div>
+
+                    <div className="dashboardPanelCount">
+                      {expiringRegistrations.length}
+                    </div>
                   </div>
-                )}
-              </section>
-            </div>
-          </>
-        ) : null}
+
+                  {expiringRegistrations.length === 0 ? (
+                    <div className="dashboardEmpty">No upcoming expirations.</div>
+                  ) : (
+                    <div className="dashboardTable dashboardRegistrationsTable">
+                      <div className="dashboardTableHead">
+                        <div>Plate</div>
+                        <div>Registration #</div>
+                        <div>Reg Date</div>
+                        <div>Expiry</div>
+                        <div>Status</div>
+                      </div>
+
+                      {expiringRegistrations.map((r) => {
+                        const left = daysUntil(r.expiration_date);
+
+                        return (
+                          <div className="dashboardTableRow" key={r.registration_number}>
+                            <div className="dashboardPlate">
+                              {r.plate_number || "—"}
+                            </div>
+
+                            <div className="dashboardStack">
+                              <div className="dashboardMono dashboardStrong">
+                                {r.registration_number || "—"}
+                              </div>
+
+                              {left !== null ? (
+                                <div className="dashboardMuted">
+                                  {left < 0
+                                    ? `${Math.abs(left)} day${Math.abs(left) === 1 ? "" : "s"} overdue`
+                                    : left === 0
+                                      ? "Expires today"
+                                      : `${left} day${left === 1 ? "" : "s"} left`}
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <div>
+                              {formatDashboardDate(r.registration_date)}
+                            </div>
+
+                            <div className="dashboardExpiry">
+                              {formatDashboardDate(r.expiration_date)}
+                            </div>
+
+                            <div>
+                              <span className={statusClass(r.registration_status)}>
+                                {r.registration_status || "—"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
     </PageShell>
   );

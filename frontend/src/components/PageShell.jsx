@@ -29,8 +29,8 @@ export default function PageShell({ children }) {
 
         {/* Brand / logo area */}
         <div className="pageSidebarBrand">
-          <div className="pageSidebarBrandTitle">LTO IMS</div>
-          <div className="pageSidebarBrandSub">Information Management</div>
+          <div className="pageSidebarBrandTitle">Land Transportation Office</div>
+          <div className="pageSidebarBrandSub">Information Management System</div>
         </div>
 
         {/* Navigation links — active item is highlighted based on current path */}

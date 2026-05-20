@@ -1,7 +1,70 @@
+.dashboardPage,
+.dashboardPage * {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 .dashboardPage {
+  position: relative;
+  min-height: calc(100vh - 36px);
+  margin: -18px;
+  padding: 18px;
+  overflow: hidden;
+  border-radius: 22px;
+  color: #fff;
+  isolation: isolate;
+}
+
+.dashboardBg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(74, 143, 249, 0.34), transparent 32%),
+    radial-gradient(circle at 86% 6%, rgba(20, 184, 255, 0.18), transparent 30%),
+    linear-gradient(
+      135deg,
+      #061636 0%,
+      #0B2454 38%,
+      #123A7A 66%,
+      #07172F 100%
+    );
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dashboardBg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 10, 28, 0.08);
+  pointer-events: none;
+}
+
+.dashboardContent {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-height: 100%;
+}
+
+.dashboardTopBar {
+  color: #fff;
+}
+
+.dashboardDateText {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.dashboardTimeText {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.dashboardAvatar {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .dashboardHero {
@@ -13,44 +76,58 @@
 }
 
 .dashboardEyebrow {
-  color: #4A8FF9;
+  color: rgba(190, 220, 255, 0.95);
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font-weight: 900;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 6px;
 }
 
 .dashboardTitle {
   margin: 0;
-  color: #1D1D1F;
-  font-size: 34px;
+  color: #fff;
+  font-size: 36px;
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.04em;
 }
 
 .dashboardSub {
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 14px;
   margin-top: 10px;
 }
 
 .dashboardRefreshBtn {
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.22);
   padding: 10px 18px;
   border-radius: 999px;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 900;
   color: #fff;
-  background: linear-gradient(135deg, #4F8CFF 0%, #4A87F9 60%, #4785F6 100%);
-  box-shadow: 0 14px 30px rgba(74, 143, 249, 0.24);
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    border-color 0.14s ease;
+}
+
+.dashboardRefreshBtn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.34);
 }
 
 .dashboardRefreshBtn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+  transform: none;
 }
 
 .dashboardMetricsGrid {
@@ -65,9 +142,9 @@
   min-height: 104px;
   padding: 18px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.52);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.065);
+  background: rgba(10, 35, 82, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -81,7 +158,8 @@
   width: 96px;
   height: 96px;
   border-radius: 999px;
-  opacity: 0.14;
+  opacity: 0.28;
+  pointer-events: none;
 }
 
 .dashboardMetric--blue::after {
@@ -101,33 +179,36 @@
 }
 
 .dashboardMetricIcon {
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 16px;
   display: grid;
   place-items: center;
-  background: rgba(74, 143, 249, 0.1);
-  font-size: 22px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 21px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .dashboardMetricLabel {
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .dashboardMetricValue {
-  color: #1D1D1F;
-  font-size: 30px;
-  font-weight: 950;
+  color: #fff;
+  font-size: 31px;
+  font-weight: 900;
   line-height: 1.05;
   margin-top: 4px;
   letter-spacing: -0.04em;
 }
 
 .dashboardMetricNote {
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.58);
   font-size: 12px;
   margin-top: 6px;
 }
@@ -139,10 +220,10 @@
 }
 
 .dashboardPanel {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.52);
+  background: rgba(9, 31, 73, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 22px;
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.065);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
   overflow: hidden;
 }
 
@@ -156,19 +237,22 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.055);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .dashboardPanelTitle {
-  color: #1D1D1F;
+  color: #fff;
   font-size: 16px;
   font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 
 .dashboardPanelSub {
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.62);
   font-size: 12px;
-  margin-top: 4px;
+  margin-top: 5px;
 }
 
 .dashboardPanelCount {
@@ -178,8 +262,8 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(74, 143, 249, 0.11);
-  color: #4A8FF9;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
   font-weight: 900;
   font-size: 13px;
 }
@@ -207,35 +291,36 @@
 
 .dashboardTableHead {
   padding: 12px 20px;
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.58);
   font-size: 12px;
-  font-weight: 800;
-  background: rgba(245, 247, 250, 0.72);
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .dashboardTableRow {
   padding: 14px 20px;
-  color: #1D1D1F;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
-  border-top: 1px solid rgba(0, 0, 0, 0.045);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dashboardTableRow:hover {
-  background: rgba(74, 143, 249, 0.045);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .dashboardStrong {
-  font-weight: 850;
+  color: #fff;
+  font-weight: 900;
 }
 
 .dashboardMuted {
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.52);
   font-size: 12px;
   margin-top: 3px;
 }
 
 .dashboardMono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .dashboardStack {
@@ -243,22 +328,24 @@
 }
 
 .dashboardPlate {
+  color: #fff;
   font-weight: 900;
   letter-spacing: 0.01em;
 }
 
 .dashboardLocation {
   min-width: 0;
-  color: #1D1D1F;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.35;
 }
 
 .dashboardFine {
-  color: #FF3B30;
-  font-weight: 950;
+  color: #FFD1D1;
+  font-weight: 900;
 }
 
 .dashboardExpiry {
+  color: #fff;
   font-weight: 900;
 }
 
@@ -270,41 +357,41 @@
   padding: 5px 10px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 900;
   text-transform: capitalize;
-  background: rgba(142, 142, 147, 0.14);
-  color: #636366;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
 }
 
 .dashboardStatus--active,
 .dashboardStatus--paid {
-  background: rgba(52, 199, 89, 0.14);
-  color: #1F9D48;
+  background: rgba(52, 199, 89, 0.22);
+  color: #C9FFD9;
 }
 
 .dashboardStatus--expired,
 .dashboardStatus--unpaid {
-  background: rgba(255, 59, 48, 0.13);
-  color: #E3342F;
+  background: rgba(255, 59, 48, 0.22);
+  color: #FFD1D1;
 }
 
 .dashboardStatus--suspended,
 .dashboardStatus--contested {
-  background: rgba(255, 149, 0, 0.14);
-  color: #C96F00;
+  background: rgba(255, 149, 0, 0.24);
+  color: #FFE5B8;
 }
 
 .dashboardEmpty {
   padding: 28px 20px;
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.68);
   font-size: 14px;
 }
 
 .dashboardErrorCard {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 59, 48, 0.16);
+  background: rgba(255, 59, 48, 0.16);
+  border: 1px solid rgba(255, 59, 48, 0.28);
   border-radius: 22px;
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.065);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
   padding: 18px;
   display: flex;
   align-items: center;
@@ -313,39 +400,27 @@
 }
 
 .dashboardErrorTitle {
-  color: #FF3B30;
+  color: #fff;
   font-weight: 900;
   font-size: 14px;
 }
 
 .dashboardErrorText {
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
   margin-top: 4px;
 }
 
 .dashboardPanelLoading {
   padding: 24px;
-  color: #86868B;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .dashboardSkeleton {
   height: 104px;
   border-radius: 22px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.72), rgba(255,255,255,0.96), rgba(255,255,255,0.72));
-  background-size: 220% 100%;
-  animation: dashboardSkeleton 1.2s ease-in-out infinite;
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.045);
-}
-
-@keyframes dashboardSkeleton {
-  from {
-    background-position: 220% 0;
-  }
-
-  to {
-    background-position: -220% 0;
-  }
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
 }
 
 @media (max-width: 1100px) {
@@ -380,6 +455,6 @@
   }
 
   .dashboardTitle {
-    font-size: 28px;
+    font-size: 30px;
   }
 }
