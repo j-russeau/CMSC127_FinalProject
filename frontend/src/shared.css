@@ -7,6 +7,27 @@
  * These classes use no prefix so every page can import and use them directly.
  */
 
+/* ── Global font to Arial ── */
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 /* ── Avatar ── */
 .avatar {
   width: 34px;
@@ -21,11 +42,33 @@
 }
 
 /* ── Top bar ── */
-.topBar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
-.topRight { display: flex; align-items: center; gap: 10px; }
-.dateTime { font-size: 12px; text-align: right; line-height: 1.2; }
-.dateText { font-weight: 700; color: #1D1D1F; }
-.timeText { color: #86868B; }
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.topRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dateTime {
+  font-size: 12px;
+  text-align: right;
+  line-height: 1.2;
+}
+
+.dateText {
+  font-weight: 700;
+  color: #1D1D1F;
+}
+
+.timeText {
+  color: #86868B;
+}
 
 /* ── Search ── */
 .searchWrap {
@@ -38,6 +81,7 @@
   padding: 10px 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
 }
+
 .searchInput {
   border: none;
   outline: none;
@@ -48,9 +92,24 @@
 }
 
 /* ── Page header ── */
-.headerRow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.pageTitle { font-size: 20px; font-weight: 800; color: #1D1D1F; }
-.pageSub { font-size: 13px; color: #86868B; margin-top: 4px; }
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pageTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1D1D1F;
+}
+
+.pageSub {
+  font-size: 13px;
+  color: #86868B;
+  margin-top: 4px;
+}
 
 /* ── Cards ── */
 .card {
@@ -60,9 +119,24 @@
   box-shadow: 0 14px 35px rgba(0, 0, 0, 0.06);
   padding: 16px;
 }
-.tableCard { padding: 0; overflow: hidden; }
-.tableTitleRow { padding: 14px; display: flex; align-items: center; gap: 12px; }
-.tableTitle { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+
+.tableCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.tableTitleRow {
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tableTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D1D1F;
+}
 
 /* ── Table tools ── */
 .tableTools {
@@ -72,19 +146,20 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
 .tableToolLabel {
   font-size: 12px;
   font-weight: 700;
   color: #86868B;
   white-space: nowrap;
 }
+
 .tableSortSelect {
   width: auto;
   min-width: 190px;
   padding: 8px 12px;
   font-size: 13px;
 }
-
 
 /* ── Buttons ── */
 .primaryBtn {
@@ -102,7 +177,11 @@
   box-shadow: 0 14px 30px rgba(74, 143, 249, 0.25);
   white-space: nowrap;
 }
-.primaryBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .secondaryBtn {
   border: 1px solid rgba(0, 0, 0, 0.12);
@@ -127,8 +206,16 @@
   color: #86868B;
   transition: color 0.15s, background 0.15s;
 }
-.iconBtn:hover { background: rgba(0, 0, 0, 0.06); color: #1D1D1F; }
-.iconBtn.danger:hover { background: rgba(255, 59, 48, 0.1); color: #FF3B30; }
+
+.iconBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #1D1D1F;
+}
+
+.iconBtn.danger:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color: #FF3B30;
+}
 
 /* ── Form inputs ── */
 .input {
@@ -144,20 +231,65 @@
   transition: border-color 0.15s, box-shadow 0.15s;
   appearance: auto;
 }
-.input:focus { border-color: #4A8FF9; box-shadow: 0 0 0 3px rgba(74, 143, 249, 0.12); }
 
-.formSection { display: flex; flex-direction: column; gap: 14px; }
+.input:focus {
+  border-color: #4A8FF9;
+  box-shadow: 0 0 0 3px rgba(74, 143, 249, 0.12);
+}
 
-.fieldFull { display: flex; flex-direction: column; gap: 6px; }
-.fieldFull label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
-.field2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.field2 > div { display: flex; flex-direction: column; gap: 6px; }
-.field2 label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+.fieldFull {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-.field3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-.field3 > div { display: flex; flex-direction: column; gap: 6px; }
-.field3 label { font-size: 13px; font-weight: 700; color: #1D1D1F; }
+.fieldFull label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D1D1F;
+}
+
+.field2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.field2 > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field2 label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D1D1F;
+}
+
+.field3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.field3 > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field3 label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1D1D1F;
+}
 
 /* ── Modal ── */
 .modalOverlay {
@@ -176,7 +308,13 @@
   align-items: center;
   margin-bottom: 20px;
 }
-.modalTitle { font-size: 20px; font-weight: 800; color: #1D1D1F; }
+
+.modalTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1D1D1F;
+}
+
 .modalCloseBtn {
   width: 32px;
   height: 32px;
@@ -199,10 +337,29 @@
 }
 
 /* ── Feedback ── */
-.msgSuccess { color: #34C759; font-weight: 700; font-size: 13px; }
-.msgError   { color: #FF3B30; font-weight: 700; font-size: 13px; }
-.softNote   { margin-top: 10px; font-size: 12px; color: #86868B; }
-.emptyState { padding: 24px 16px; color: #86868B; font-size: 14px; }
+.msgSuccess {
+  color: #34C759;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.msgError {
+  color: #FF3B30;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.softNote {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #86868B;
+}
+
+.emptyState {
+  padding: 24px 16px;
+  color: #86868B;
+  font-size: 14px;
+}
 
 /* ── Danger button ── */
 .dangerBtn {
@@ -219,8 +376,15 @@
   background: #FF3B30;
   white-space: nowrap;
 }
-.dangerBtn:hover    { opacity: 0.85; }
-.dangerBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.dangerBtn:hover {
+  opacity: 0.85;
+}
+
+.dangerBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 /* ── Confirm modal ── */
 .confirmModal {
@@ -232,13 +396,19 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
   text-align: center;
 }
+
 .confirmMessage {
   font-size: 14px;
   color: #1D1D1F;
   line-height: 1.65;
   margin-bottom: 24px;
 }
-.confirmFooter { display: flex; gap: 10px; justify-content: center; }
+
+.confirmFooter {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
 
 /* ── Toast notifications ── */
 .toastList {
@@ -251,6 +421,7 @@
   gap: 8px;
   pointer-events: none;
 }
+
 .toast {
   pointer-events: all;
   display: flex;
@@ -264,9 +435,22 @@
   max-width: 340px;
   animation: toastIn 0.22s ease;
 }
-.toastSuccess { background: #34C759; color: #fff; }
-.toastError   { background: #FF3B30; color: #fff; }
-.toastMsg     { flex: 1; line-height: 1.4; }
+
+.toastSuccess {
+  background: #34C759;
+  color: #fff;
+}
+
+.toastError {
+  background: #FF3B30;
+  color: #fff;
+}
+
+.toastMsg {
+  flex: 1;
+  line-height: 1.4;
+}
+
 .toastClose {
   border: none;
   background: rgba(255, 255, 255, 0.28);
@@ -282,26 +466,35 @@
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateX(14px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* ── Selected table row ── */
-.selectedRow { background: rgba(74, 143, 249, 0.07) !important; }
+.selectedRow {
+  background: rgba(74, 143, 249, 0.07) !important;
+}
 
 /* Scrollable table container */
 .tableScroll {
-  max-height: 520px;        /* adjust: 420–650 depending on your preference */
+  max-height: 520px;
   overflow-y: auto;
   overflow-x: auto;
   border-radius: 18px;
 }
 
-/* Keeps the header visible while scrolling (works if header is inside the scroll container) */
+/* Keeps the header visible while scrolling */
 .stickyHeader {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: rgba(255,255,255,0.95);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(6px);
 }
