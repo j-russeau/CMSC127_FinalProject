@@ -25,28 +25,28 @@ INSERT INTO driver
   (license_number, license_type, first_name, middle_name, last_name, sex,
    date_of_birth, license_status, license_expiration_date, license_issuance_date)
 VALUES
-('D06-11-009385','Professional','Juan','Perez','Dela Cruz','M','1985-06-15','valid','2030-01-01','2020-01-01'),
-('D07-12-009386','Professional','Ana','Luna','Reyes','F','1990-02-20','valid','2029-02-20','2019-02-20'),
-('A01-22-111111','Non-Professional','Maria','Santos','Clara','F','1995-10-10','suspended','2028-05-20','2022-05-20'),
+('D06-11-009385','Professional','Juan','Perez','Dela Cruz','M','1985-06-15','valid','2030-01-01','2025-01-01'),
+('D07-12-009386','Professional','Ana','Luna','Reyes','F','1990-02-20','valid','2029-02-20','2024-02-20'),
+('A01-22-111111','Non-Professional','Maria','Santos','Clara','F','1995-10-10','suspended','2028-05-20','2023-05-20'),
 ('B02-23-222222','Student Permit','Pedro','Reyes','Penduko','M','2005-12-01','expired','2024-12-01','2023-12-01'),
 ('C03-20-333333','Non-Professional','Rogelio',NULL,'Cruz','M','1960-07-07','valid','2027-07-07','2022-07-07'),
-('D04-21-444444','Professional','Ben',NULL,'Torres','M','1988-03-03','revoked','2026-03-03','2021-03-03'),
+('D04-21-444444','Professional','Ben',NULL,'Torres','M','1988-03-03','revoked','2027-03-03','2022-03-03'),
 ('E05-22-555555','Student Permit','Liza',NULL,'Garcia','F','2007-01-15','expired','2025-01-15','2024-01-15'),
 ('F06-19-666666','Non-Professional','Karla','M.','Lopez','F','1999-11-11','expired','2024-11-11','2019-11-11'),
-('G07-18-777777','Professional','Mark',NULL,'Santos','M','2000-08-08','valid','2030-08-08','2020-08-08'),
+('G07-18-777777','Professional','Mark',NULL,'Santos','M','2000-08-08','valid','2030-08-08','2025-08-08'),
 ('H08-17-888888','Non-Professional','Anthony',NULL,'Rojo','M','1978-04-04','valid','2028-04-04','2023-04-04'),
-('I09-16-999999','Professional','Jericho',NULL,'Gabion','M','1982-09-09','suspended','2029-09-09','2019-09-09'),
-('J10-15-000001','Student Permit','Lakeisha','Mae','Austria','F','2004-05-05','valid','2027-05-05','2025-05-05'),
-('K11-14-000002','Professional','Sofia','Ramos','Mendoza','F','1992-12-12','valid','2031-12-12','2021-12-12'),
+('I09-16-999999','Professional','Jericho',NULL,'Gabion','M','1982-09-09','suspended','2029-09-09','2024-09-09'),
+('J10-15-000001','Student Permit','Lakeisha','Mae','Austria','F','2004-05-05','valid','2027-05-05','2026-05-05'),
+('K11-14-000002','Professional','Sofia','Ramos','Mendoza','F','1992-12-12','valid','2031-05-12','2026-05-12'),
 ('L12-13-000003','Non-Professional','Noel','Dizon','Bautista','M','1975-01-30','valid','2027-01-30','2022-01-30'),
 ('M13-12-000004','Professional','Carlo','Vega','Villanueva','M','1970-06-18','expired','2025-06-18','2020-06-18'),
-('N14-11-000005','Professional','Patricia','Uy','Flores','F','1987-09-25','suspended','2028-09-25','2018-09-25'),
-('O15-10-000006','Student Permit','Miguel','Lim','Navarro','M','2006-04-14','valid','2027-04-14','2025-04-14'),
+('N14-11-000005','Professional','Patricia','Uy','Flores','F','1987-09-25','suspended','2028-09-25','2023-09-25'),
+('O15-10-000006','Student Permit','Miguel','Lim','Navarro','M','2006-04-14','valid','2027-04-14','2026-04-14'),
 ('P16-09-000007','Non-Professional','Rosa','Cruz','Aquino','F','1968-02-02','valid','2026-12-31','2021-12-31'),
-('Q17-08-000008','Professional','Victor','Tan','Lim','M','1998-07-19','valid','2031-07-19','2021-07-19'),
-('R18-07-000009','Non-Professional','Nina','Sy','Tan','F','1983-11-27','revoked','2027-11-27','2017-11-27'),
-('S19-06-000010','Professional','Arnel','Diaz','Ramos','M','1991-03-08','valid','2030-03-08','2020-03-08'),
-('T20-05-000011','Professional','Bianca','Lee','Sy','F','1996-08-21','valid','2032-08-21','2022-08-21');
+('Q17-08-000008','Professional','Victor','Tan','Lim','M','1998-07-19','valid','2030-07-19','2025-07-19'),
+('R18-07-000009','Non-Professional','Nina','Sy','Tan','F','1983-11-27','revoked','2027-11-27','2022-11-27'),
+('S19-06-000010','Professional','Arnel','Diaz','Ramos','M','1991-03-08','valid','2030-03-08','2025-03-08'),
+('T20-05-000011','Professional','Bianca','Lee','Sy','F','1996-08-21','valid','2030-08-21','2025-08-21');
 
 -- ---------------------------------------------------------------------------
 -- 2) DRIVER ADDRESSES

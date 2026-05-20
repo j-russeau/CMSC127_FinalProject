@@ -18,6 +18,15 @@ const MIN_AGE_BY_LICENSE_TYPE = {
   "Professional": 18,
 };
 
+const LICENSE_VALIDITY_YEARS_BY_TYPE = {
+  "Student Permit": 1,
+  "Non-Professional": 5,
+  "Professional": 5,
+};
+
+// LTO Office Code = D06
+const GENERATED_LICENSE_PREFIX = "D06";
+
 function parseDateOnly(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return null;
 
@@ -38,6 +47,61 @@ function parseDateOnly(value) {
 function todayDateOnly() {
   const now = new Date();
   return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
+function formatDateOnlyUTC(dt) {
+  return [
+    dt.getUTCFullYear(),
+    String(dt.getUTCMonth() + 1).padStart(2, "0"),
+    String(dt.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function addYearsToDateOnly(dateValue, years) {
+  const base = parseDateOnly(dateValue);
+  if (!base) return "";
+
+  const originalMonth = base.getUTCMonth();
+
+  const result = new Date(Date.UTC(
+    base.getUTCFullYear() + years,
+    base.getUTCMonth(),
+    base.getUTCDate()
+  ));
+
+  // Handles Feb 29 safely by clamping to Feb 28 on non-leap target years.
+  if (result.getUTCMonth() !== originalMonth) {
+    result.setUTCDate(0);
+  }
+
+  return formatDateOnlyUTC(result);
+}
+
+function expectedExpirationForLicense(licenseType, issuanceDate) {
+  const years = LICENSE_VALIDITY_YEARS_BY_TYPE[licenseType];
+  if (!years) return "";
+  return addYearsToDateOnly(issuanceDate, years);
+}
+
+function generateLicenseNumber(issueDateValue) {
+  const issueDate = parseDateOnly(issueDateValue) || todayDateOnly();
+  const yy = String(issueDate.getUTCFullYear()).slice(-2);
+  const serial = String(Math.floor(100000 + Math.random() * 900000));
+
+  return `${GENERATED_LICENSE_PREFIX}-${yy}-${serial}`;
+}
+
+async function generateAvailableLicenseNumber(issueDateValue) {
+  for (let i = 0; i < 20; i++) {
+    const licenseNumber = generateLicenseNumber(issueDateValue);
+    const [rows] = await db.query(Q.getByLicense, [licenseNumber]);
+
+    if (rows.length === 0) {
+      return licenseNumber;
+    }
+  }
+
+  throw new Error("Could not generate a unique license number. Please try again.");
 }
 
 function ageFromDob(dob) {
@@ -103,13 +167,24 @@ function validateDriverPayload(d, options = {}) {
     }
   }
 
-  if (requireLicenseNumber && !/^[A-Za-z0-9][A-Za-z0-9-]{4,19}$/.test(String(d.license_number).trim())) {
+  if (
+    requireLicenseNumber &&
+    !/^[A-Za-z0-9][A-Za-z0-9-]{4,19}$/.test(String(d.license_number).trim())
+  ) {
     return "License number must be 5–20 characters (letters, numbers, and hyphens only).";
   }
 
-  if (String(d.first_name).trim().length > 50) return "First name exceeds maximum length of 50 characters.";
-  if (String(d.last_name).trim().length > 50)  return "Last name exceeds maximum length of 50 characters.";
-  if (d.middle_name && String(d.middle_name).trim().length > 50) return "Middle name exceeds maximum length of 50 characters.";
+  if (String(d.first_name).trim().length > 50) {
+    return "First name exceeds maximum length of 50 characters.";
+  }
+
+  if (String(d.last_name).trim().length > 50) {
+    return "Last name exceeds maximum length of 50 characters.";
+  }
+
+  if (d.middle_name && String(d.middle_name).trim().length > 50) {
+    return "Middle name exceeds maximum length of 50 characters.";
+  }
 
   if (!LICENSE_TYPES.includes(d.license_type)) {
     return "Invalid license_type. Use Student Permit, Non-Professional, or Professional.";
@@ -142,6 +217,21 @@ function validateDriverPayload(d, options = {}) {
 
   if (issuance >= expiration) {
     return "License issuance date must be before expiration date.";
+  }
+
+  const expectedExpiration = expectedExpirationForLicense(
+    d.license_type,
+    d.license_issuance_date
+  );
+
+  if (!expectedExpiration) {
+    return "Could not calculate license expiration date.";
+  }
+
+  if (d.license_expiration_date !== expectedExpiration) {
+    const years = LICENSE_VALIDITY_YEARS_BY_TYPE[d.license_type];
+
+    return `${d.license_type} expiration date must be exactly ${expectedExpiration} based on the issuance date. Validity is ${years} year${years === 1 ? "" : "s"}.`;
   }
 
   const age = ageFromDob(d.date_of_birth);
@@ -192,6 +282,25 @@ router.get("/search", async (req, res) => {
     const [rows] = await db.query(Q.search, [like, like, like, like, like, limit]);
 
     res.json({ ok: true, data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── GET /api/drivers/generate-license-number?issue_date=YYYY-MM-DD ───────────
+// Generates a D06-YY-XXXXXX license number and checks that it does not exist.
+router.get("/generate-license-number", async (req, res) => {
+  try {
+    const issueDate = String(req.query.issue_date || "").trim();
+    const licenseNumber = await generateAvailableLicenseNumber(issueDate);
+
+    res.json({
+      ok: true,
+      data: {
+        license_number: licenseNumber,
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ ok: false, error: err.message });

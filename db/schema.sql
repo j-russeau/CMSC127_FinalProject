@@ -21,7 +21,17 @@ CREATE TABLE driver (
   CONSTRAINT driver_license_type_chk CHECK (license_type IN ('Student Permit', 'Non-Professional', 'Professional')),
   CONSTRAINT driver_sex_chk CHECK (sex IN ('M', 'F')),
   CONSTRAINT driver_license_status_chk CHECK (license_status IN ('valid', 'expired', 'suspended', 'revoked')),
-  CONSTRAINT driver_license_dates_chk CHECK (license_expiration_date >= license_issuance_date)
+  CONSTRAINT driver_license_dates_chk CHECK (
+    (
+      license_type = 'Student Permit'
+      AND license_expiration_date = DATE_ADD(license_issuance_date, INTERVAL 1 YEAR)
+    )
+    OR
+    (
+      license_type IN ('Non-Professional', 'Professional')
+      AND license_expiration_date = DATE_ADD(license_issuance_date, INTERVAL 5 YEAR)
+    )
+  )
 );
 
 -- DRIVER_HAS_ADDRESS

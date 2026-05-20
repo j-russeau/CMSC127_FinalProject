@@ -37,3 +37,9 @@ export function deleteDriver(licenseNumber) {
 export function searchDrivers(q, limit = 10) {
   return apiGet(`/api/drivers/search?q=${encodeURIComponent(q)}&limit=${limit}`);
 }
+
+// Ask the backend to generate a unique license number.
+export function generateDriverLicenseNumber(issueDate = "") {
+  const qs = issueDate ? `?issue_date=${encodeURIComponent(issueDate)}` : "";
+  return apiGet(`/api/drivers/generate-license-number${qs}`);
+}
