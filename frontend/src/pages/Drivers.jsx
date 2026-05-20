@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { listDrivers, createDriver, updateDriver, deleteDriver } from "../api/drivers";
+import { listDrivers, createDriver, updateDriver, deleteDriver, generateDriverLicenseNumber } from "../api/drivers";
 import PageShell from "../components/PageShell";
 import { useToast, ToastList } from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
@@ -84,6 +84,73 @@ const MIN_AGE_BY_LICENSE_TYPE = {
   "Non-Professional": 17,
   "Professional": 18,
 };
+
+const LICENSE_VALIDITY_YEARS_BY_TYPE = {
+  "Student Permit": 1,
+  "Non-Professional": 5,
+  "Professional": 5,
+};
+
+function addYearsIso(dateValue, years) {
+  if (!dateValue) return "";
+
+  const [y, m, d] = String(dateValue).split("-").map(Number);
+  if (!y || !m || !d) return "";
+
+  const originalMonth = m - 1;
+
+  const result = new Date(Date.UTC(y + years, originalMonth, d));
+
+  // Handles Feb 29 by clamping to Feb 28 on non-leap target years.
+  if (result.getUTCMonth() !== originalMonth) {
+    result.setUTCDate(0);
+  }
+
+  return [
+    result.getUTCFullYear(),
+    String(result.getUTCMonth() + 1).padStart(2, "0"),
+    String(result.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function expectedExpirationDate(licenseType, issuanceDate) {
+  const years = LICENSE_VALIDITY_YEARS_BY_TYPE[licenseType];
+  if (!years || !issuanceDate) return "";
+  return addYearsIso(issuanceDate, years);
+}
+
+function validityLabel(licenseType) {
+  const years = LICENSE_VALIDITY_YEARS_BY_TYPE[licenseType];
+
+  if (!years) {
+    return "Select license type to auto-calculate expiration.";
+  }
+
+  return `Auto-calculated validity: ${years} year${years === 1 ? "" : "s"}.`;
+}
+
+function genLocalLicenseNumber(issueDate = todayIso()) {
+  const yy = String(issueDate || todayIso()).slice(2, 4);
+  const serial = String(Math.floor(100000 + Math.random() * 900000));
+
+  return `D06-${yy}-${serial}`;
+}
+
+function applyLicenseValidityPatch(prev, patch) {
+  const next = { ...prev, ...patch };
+
+  if (
+    Object.prototype.hasOwnProperty.call(patch, "license_type") ||
+    Object.prototype.hasOwnProperty.call(patch, "license_issuance_date")
+  ) {
+    next.license_expiration_date = expectedExpirationDate(
+      next.license_type,
+      next.license_issuance_date
+    );
+  }
+
+  return next;
+}
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -177,6 +244,21 @@ function validateDriverFormData(d, options = {}) {
 
   if (d.license_issuance_date >= d.license_expiration_date) {
     return "Issuance date must be before expiration date.";
+  }
+
+  const expectedExpiration = expectedExpirationDate(
+    d.license_type,
+    d.license_issuance_date
+  );
+
+  if (!expectedExpiration) {
+    return "Expiration date could not be calculated. Select license type and issuance date.";
+  }
+
+  if (d.license_expiration_date !== expectedExpiration) {
+    const years = LICENSE_VALIDITY_YEARS_BY_TYPE[d.license_type];
+
+    return `${d.license_type} expiration must be ${formatDate(expectedExpiration)}. Validity is ${years} year${years === 1 ? "" : "s"}.`;
   }
 
   const age = ageFromDob(d.date_of_birth);
@@ -371,14 +453,58 @@ export default function Drivers() {
     return rows;
   }, [drivers, query, sortBy]);
 
-  function openAdd() {
-    setForm(emptyForm);
+  async function openAdd() {
+    const issuance = todayIso();
+    const fallbackLicense = genLocalLicenseNumber(issuance);
+
+    setForm({
+      ...emptyForm,
+      addresses: [emptyAddress()],
+      license_number: fallbackLicense,
+      license_issuance_date: issuance,
+      license_expiration_date: "",
+    });
+
     setAddErr("");
     setAddOpen(true);
+
+    try {
+      const generated = await generateDriverLicenseNumber(issuance);
+
+      setForm((prev) => ({
+        ...prev,
+        license_number: generated?.license_number || fallbackLicense,
+      }));
+    } catch {
+      // Fallback license is already set. Backend duplicate validation still protects the DB.
+    }
   }
 
   function patchForm(key, val) {
-    setForm((prev) => ({ ...prev, [key]: val }));
+    setForm((prev) => applyLicenseValidityPatch(prev, { [key]: val }));
+  }
+
+  async function regenerateLicenseNumber() {
+    setAddErr("");
+
+    const issuance = form.license_issuance_date || todayIso();
+    const fallbackLicense = genLocalLicenseNumber(issuance);
+
+    setForm((prev) => ({
+      ...prev,
+      license_number: fallbackLicense,
+    }));
+
+    try {
+      const generated = await generateDriverLicenseNumber(issuance);
+
+      setForm((prev) => ({
+        ...prev,
+        license_number: generated?.license_number || fallbackLicense,
+      }));
+    } catch {
+      // Fallback license is already set.
+    }
   }
 
   function addAddressRow() {
@@ -477,9 +603,8 @@ export default function Drivers() {
   }
 
   function patchEditForm(key, val) {
-    setEditForm((prev) => ({ ...prev, [key]: val }));
+    setEditForm((prev) => applyLicenseValidityPatch(prev, { [key]: val }));
   }
-
   /*
    * Sends a PUT with the edited fields. Addresses are excluded — the backend
    * PUT endpoint only updates the driver row itself.
@@ -656,8 +781,26 @@ export default function Drivers() {
                 <div className="driversFormGroupLabel">License Information</div>
                 <div className="fieldFull">
                   <label>License Number</label>
-                  <input className="input" placeholder="N01-12-345678"
-                    value={form.license_number} onChange={(e) => patchForm("license_number", e.target.value)} />
+
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <input
+                      className="input"
+                      placeholder="D06-26-123456"
+                      value={form.license_number}
+                      onChange={(e) => patchForm("license_number", e.target.value.toUpperCase())}
+                    />
+
+                    <button
+                      type="button"
+                      className="secondaryBtn"
+                      onClick={regenerateLicenseNumber}
+                      disabled={submitting}
+                      title="Generate a new license number"
+                      style={{ whiteSpace: "nowrap" }}
+                    >
+                      Regenerate
+                    </button>
+                  </div>
                 </div>
                 <div className="fieldFull">
                   <label>License Type</label>
@@ -692,8 +835,16 @@ export default function Drivers() {
                   </div>
                   <div>
                     <label>Expiration Date</label>
-                    <input className="input" type="date"
-                      value={form.license_expiration_date} onChange={(e) => patchForm("license_expiration_date", e.target.value)} />
+                    <input
+                      className="input"
+                      type="date"
+                      value={form.license_expiration_date}
+                      readOnly
+                      title="Expiration is auto-calculated from license type and issuance date."
+                    />
+                    <div className="softNote" style={{ marginTop: 4 }}>
+                      {validityLabel(form.license_type)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -823,8 +974,16 @@ export default function Drivers() {
                   </div>
                   <div>
                     <label>Expiration Date</label>
-                    <input className="input" type="date"
-                      value={editForm.license_expiration_date} onChange={(e) => patchEditForm("license_expiration_date", e.target.value)} />
+                    <input
+                      className="input"
+                      type="date"
+                      value={editForm.license_expiration_date}
+                      readOnly
+                      title="Expiration is auto-calculated from license type and issuance date."
+                    />
+                    <div className="softNote" style={{ marginTop: 4 }}>
+                      {validityLabel(editForm.license_type)}
+                    </div>
                   </div>
                 </div>
               </div>
