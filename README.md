@@ -1,117 +1,150 @@
-# 🔀 Daily Git Workflow (Team)
+# LTO IMS — Information Management System
 
-A step-by-step guide for consistent, conflict-free collaboration using Git and GitHub.
+A full-stack Information Management System for managing Land Transportation Office (LTO)-style records, including drivers, vehicles, registrations, violation tickets, violations, and reports.
 
----
-
-## Step 0 — Start the Day Clean
-
-Always pull the latest `main` before starting any work:
-
-```bash
-git checkout main
-git pull origin main
-```
+This project was built for **CMSC 127** as a database-driven application using **React**, **Node.js/Express**, and **MySQL**.
 
 ---
 
-## Step 1 — Create a Feature Branch for Your Task
+## Table of Contents
 
-Use a consistent branch naming format:
-
-| Type | Format |
-|------|--------|
-| New feature | `feature/<task>` |
-| Bug fix | `fix/<task>` |
-
-**Example:**
-
-```bash
-git checkout -b feature/drivers-api
-```
-
----
-
-## Step 2 — Work and Commit in Small Chunks
-
-Commit often — don't wait until the end of the day:
-
-```bash
-git add backend/src/routes/drivers.js
-git commit -m "Add drivers GET and POST endpoints"
-```
-
-> 💡 Small, frequent commits make code reviews easier and conflicts less painful.
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Database Design](#database-design)
+- [Project Structure](#project-structure)
+- [Setup Instructions](#setup-instructions)
+- [Database Setup](#database-setup)
+- [Running the Application](#running-the-application)
+- [Core Modules](#core-modules)
+- [Validation and Edge Case Handling](#validation-and-edge-case-handling)
+- [Security Notes](#security-notes)
+- [Demo Testing Checklist](#demo-testing-checklist)
+- [Team Members](#team-members)
 
 ---
 
-## Step 3 — Push Your Branch to GitHub
+## Project Overview
 
-```bash
-git push -u origin feature/drivers-api
-```
+The **LTO IMS** is a web-based system designed to manage records related to drivers, vehicles, registrations, and traffic violations.
 
----
+The system supports CRUD operations, relational data validation, transaction-safe ticket creation, registration history tracking, and report generation.
 
-## Step 4 — Open a Pull Request (PR)
+Main entities include:
 
-On GitHub:
-
-1. Create a PR from `feature/drivers-api` → `main`
-2. Add a short description covering:
-   - **What changed**
-   - **How to test it**
-
----
-
-## Step 5 — Sync with `main` Before Merging
-
-If your branch is behind `main`, sync it first to avoid conflicts:
-
-```bash
-git checkout feature/drivers-api
-git pull origin main
-# resolve any conflicts if they appear
-git push
-```
-
-Then merge the PR on GitHub. ✅
+- Drivers
+- Driver addresses
+- Vehicles
+- Vehicle registrations
+- Violation tickets
+- Violations
+- Reports and dashboard summaries
 
 ---
 
-## Step 6 — After Merge, Delete the Branch
+## Features
 
-Clean up to keep the repo tidy:
+### Dashboard
 
-```bash
-git checkout main
-git pull origin main
-git branch -d feature/drivers-api
-```
+- Displays total drivers
+- Displays total vehicles
+- Displays unpaid tickets
+- Displays expired registrations
+- Shows recent violation tickets
+- Shows registrations expiring soon
+- Uses formatted dates and status indicators
+- Uses a dark blue dashboard design with React icons
 
-> Also delete the branch on GitHub via the PR page or the **Branches** tab.
+### Driver Management
+
+- Add, view, edit, and delete drivers
+- Supports multiple addresses per driver
+- Validates license type, sex, status, birth date, issuance date, and expiration date
+- Blocks deletion when the driver owns vehicles or has violation tickets
+- Cascades driver address deletion when a driver is deleted
+
+### Vehicle Management
+
+- Add, view, edit, and delete vehicles
+- Validates plate number, engine number, chassis number, year, color, make, model, type, and owner
+- Prevents duplicate plate, engine, and chassis numbers
+- Blocks deletion if a vehicle has registration history or violation tickets
+- Prevents editing vehicle identity fields once created
+
+### Registration Management
+
+- Add registration and renewal records
+- View latest/current registration per vehicle
+- View full registration history
+- Validates expiration date, registration date, status, and vehicle identity
+- Prevents more than one active registration per vehicle
+- Disables deletion of registration records for audit/history safety
+
+### Violation Ticket Management
+
+- Create violation tickets with one or more violations
+- Ticket and violations are inserted atomically in one transaction
+- If one violation insert fails, the entire ticket creation rolls back
+- Validates driver reference and vehicle reference
+- Validates ticket date/time, location length, status, and duplicate IDs
+- Allows status updates only
+- Prevents invalid status transitions such as paid → unpaid
+- Prevents deletion of tickets because tickets are historical records
+- Includes a regenerate ticket ID button in case a duplicate ID is generated
+
+### Violation Management
+
+- Uses a violation catalog
+- Automatically matches violation fine amounts to catalog values
+- Prevents invalid violation names
+- Prevents duplicate violation IDs
+- Prevents duplicate violation types inside one ticket
+- Prevents deleting the last violation on a ticket
+
+### Reports
+
+- Supports summary and filtered report views
+- Uses query-based reporting over driver, vehicle, registration, and violation data
+- Designed for demo and database query presentation
 
 ---
 
-## .gitignore — Frontend `node_modules`
+## Tech Stack
 
-Make sure your `.gitignore` includes:
+### Frontend
 
-```
-frontend/node_modules/
-```
+- React
+- Vite
+- React Router
+- React Icons
+- CSS modules/page-specific CSS
+- Fetch API
 
-> Never commit `node_modules` — it's large, machine-specific, and fully reproducible via `npm install`.
+### Backend
+
+- Node.js
+- Express.js
+- MySQL2
+- REST API routes
+- Parameterized SQL queries
+- Transaction handling
+
+### Database
+
+- MySQL
+- SQL DDL
+- SQL seed data
+- SQL views
+- Foreign keys
+- Check constraints
+- Unique constraints
+- Generated column for active-registration enforcement
 
 ---
 
-## Quick Reference
+## Database Design
 
-```
-morning          → git pull origin main
-new task         → git checkout -b feature/<task>
-save progress    → git add . && git commit -m "..."
-share work       → git push -u origin feature/<task>
-before merging   → git pull origin main (on your branch)
-after merging    → git checkout main && git pull && git branch -d feature/<task>
-```
+The database is named:
+
+```sql
+lto_ims
