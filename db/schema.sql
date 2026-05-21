@@ -3,7 +3,6 @@ DROP DATABASE IF EXISTS lto_ims;
 CREATE DATABASE lto_ims;
 USE lto_ims;
 
--- Setup part, script for recreating your schema and your diagrams
 -- DRIVER
 CREATE TABLE driver (
   license_number VARCHAR(20),
